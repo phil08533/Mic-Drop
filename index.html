@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0e0e10" />
+  <meta name="description" content="A rap battle party game. Crew Battle or King of the Hill." />
+  <title>Mic Drop</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" />
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+  <div id="app" class="app" data-screen="loading">
+    <header class="topbar">
+      <button class="iconbtn" id="back-btn" aria-label="Back" hidden>
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path d="M15 4 L7 12 L15 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <a class="brand" href="#" data-action="home" aria-label="Mic Drop home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="28" height="28">
+            <circle cx="16" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="2.4"/>
+            <path d="M16 17 L16 26" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M9 26 L23 26" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="brand-text">Mic<span class="brand-dot">.</span>Drop</span>
+      </a>
+      <div class="topbar-spacer"></div>
+      <button class="iconbtn" id="music-toggle" aria-label="Music">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path d="M9 18 V6 L20 4 V16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="7" cy="18" r="2.5" fill="none" stroke="currentColor" stroke-width="2.2"/>
+          <circle cx="18" cy="16" r="2.5" fill="none" stroke="currentColor" stroke-width="2.2"/>
+        </svg>
+      </button>
+      <button class="iconbtn" id="settings-toggle" aria-label="Settings">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2.2"/>
+          <path d="M12 2 V5 M12 19 V22 M2 12 H5 M19 12 H22 M4.9 4.9 L7 7 M17 17 L19.1 19.1 M4.9 19.1 L7 17 M17 7 L19.1 4.9"
+                stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </header>
+
+    <main id="screen" class="screen" aria-live="polite">
+      <div class="loader">Loading the booth&hellip;</div>
+    </main>
+
+    <aside class="drawer" id="music-drawer" aria-hidden="true" aria-label="Music player"></aside>
+    <aside class="drawer" id="settings-drawer" aria-hidden="true" aria-label="Settings"></aside>
+    <div class="scrim" id="scrim" hidden></div>
+  </div>
+
+  <template id="tpl-home">
+    <section class="home">
+      <h1 class="display">
+        <span class="line one">Grab</span>
+        <span class="line two">the <em>mic.</em></span>
+        <span class="line three">Drop the room.</span>
+      </h1>
+      <p class="tag">A rap battle party game. No skill required, just nerve.</p>
+      <div class="modes">
+        <button class="mode-card" data-action="start-crew">
+          <span class="mode-tag">3+ teams</span>
+          <h2>Crew Battle</h2>
+          <p>Three teams. Oldest combined age starts. The team to the left judges. Trade bars one-on-one.</p>
+          <span class="mode-cta">Start a battle &rarr;</span>
+        </button>
+        <button class="mode-card alt" data-action="start-koth">
+          <span class="mode-tag">Solo / pass-and-play</span>
+          <h2>King of the Hill</h2>
+          <p>Anyone can jump in. Three cards each. Winner stays on the mic till they get booted.</p>
+          <span class="mode-cta">Take the mic &rarr;</span>
+        </button>
+      </div>
+      <footer class="home-foot">
+        <button class="ghostbtn" data-action="how">How it works</button>
+        <button class="ghostbtn" data-action="open-music">Pick a beat</button>
+        <button class="ghostbtn" data-action="open-settings">Settings</button>
+      </footer>
+    </section>
+  </template>
+
+  <template id="tpl-how">
+    <section class="how">
+      <h2 class="screen-title">How it works</h2>
+      <div class="how-grid">
+        <article>
+          <h3>Crew Battle</h3>
+          <ol>
+            <li>Set up three teams. Enter the rough age of each member.</li>
+            <li>The team with the highest combined age battles first against the team to their right.</li>
+            <li>The third team — to the battling team&rsquo;s left — judges.</li>
+            <li>Each player draws a Burn or Boast card, plus a Rhyme card with a word they have to land in their bars.</li>
+            <li>Players go one-on-one, alternating: T1P1 vs T2P1, then T1P2 vs T2P2, and so on.</li>
+            <li>After the round, judges award the win. Rotate. New battlers, new judges.</li>
+          </ol>
+        </article>
+        <article>
+          <h3>King of the Hill</h3>
+          <ol>
+            <li>Add anyone who wants to play to the roster.</li>
+            <li>Two players go up. Each draws three cards (Burn/Boast + two Rhymes).</li>
+            <li>Trade bars back and forth using your cards.</li>
+            <li>The room votes. Winner stays on the mic. Loser sits down.</li>
+            <li>Next challenger is drawn from the bench. Anyone can jump in mid-game.</li>
+          </ol>
+        </article>
+        <article class="how-tip">
+          <h3>House rules</h3>
+          <p>Keep it playful. No personal stuff that would actually wound someone.
+          The cards are prompts, not orders &mdash; bend them, ignore them, or stack
+          two together if it makes a better bar.</p>
+        </article>
+      </div>
+      <button class="ghostbtn" data-action="home">&larr; Back</button>
+    </section>
+  </template>
+
+  <script type="module" src="js/main.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "$schema": "List the audio files inside each genre folder. Paths are relative to /music/.",
+  "genres": [
+    {
+      "id": "lofi",
+      "name": "Lo-Fi",
+      "tracks": []
+    },
+    {
+      "id": "boombap",
+      "name": "Boom Bap",
+      "tracks": []
+    },
+    {
+      "id": "trap",
+      "name": "Trap",
+      "tracks": []
+    },
+    {
+      "id": "electronic",
+      "name": "Electronic",
+      "tracks": []
+    }
+  ]
+}
