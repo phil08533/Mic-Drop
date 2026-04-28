@@ -147,11 +147,11 @@ export function renderKothBattle({ go }) {
   const ca = ensureHand(s, challenger.id);
 
   const cards = el('div', { class: 'cards' });
-  cards.appendChild(handBlock(king.name, '#ffb03a', ka, () => renderKothBattle({ go })));
-  cards.appendChild(handBlock(challenger.name, '#b73fff', ca, () => renderKothBattle({ go })));
+  cards.appendChild(handBlock(king.name, '#ffb03a', ka, () => window.MicDrop.go('koth-battle', { replace: true })));
+  cards.appendChild(handBlock(challenger.name, '#b73fff', ca, () => window.MicDrop.go('koth-battle', { replace: true })));
   stage.appendChild(cards);
 
-  stage.appendChild(buildTimer(s, () => renderKothBattle({ go })));
+  stage.appendChild(buildTimer(s, () => window.MicDrop.go('koth-battle', { replace: true })));
 
   const actions = el('div', { class: 'stage-actions' });
   actions.appendChild(el('div', { class: 'score-strip' },
@@ -160,9 +160,9 @@ export function renderKothBattle({ go }) {
   ));
 
   const verdict = el('div', { class: 'verdict-actions' },
-    el('button', { class: 'primarybtn', onClick: () => awardKoth(s, king.id, challenger.id, () => renderKothBattle({ go })) },
+    el('button', { class: 'primarybtn', onClick: () => awardKoth(s, king.id, challenger.id, () => window.MicDrop.go('koth-battle', { replace: true })) },
       `${king.name} keeps the crown`),
-    el('button', { class: 'primarybtn violet', onClick: () => awardKoth(s, challenger.id, king.id, () => renderKothBattle({ go })) },
+    el('button', { class: 'primarybtn violet', onClick: () => awardKoth(s, challenger.id, king.id, () => window.MicDrop.go('koth-battle', { replace: true })) },
       `${challenger.name} takes the mic`),
   );
   actions.appendChild(verdict);

@@ -210,14 +210,14 @@ export function renderCrewBattle({ go }) {
   const leftHand = ensureHand(s, 'left');
   const rightHand = ensureHand(s, 'right');
 
-  cards.appendChild(handBlock(leftHand, lp.name, left.color, 'left', () => renderCrewBattle({ go })));
-  cards.appendChild(handBlock(rightHand, rp.name, right.color, 'right', () => renderCrewBattle({ go })));
+  cards.appendChild(handBlock(leftHand, lp.name, left.color, 'left', () => window.MicDrop.go('crew-battle', { replace: true })));
+  cards.appendChild(handBlock(rightHand, rp.name, right.color, 'right', () => window.MicDrop.go('crew-battle', { replace: true })));
 
   stage.appendChild(cards);
 
   // Timer + actions
   const timerWrap = el('div');
-  timerWrap.appendChild(buildTimer(s, () => renderCrewBattle({ go })));
+  timerWrap.appendChild(buildTimer(s, () => window.MicDrop.go('crew-battle', { replace: true })));
   stage.appendChild(timerWrap);
 
   const actions = el('div', { class: 'stage-actions' });
@@ -232,9 +232,9 @@ export function renderCrewBattle({ go }) {
   actions.appendChild(score);
 
   const verdict = el('div', { class: 'verdict-actions' });
-  verdict.appendChild(el('button', { class: 'primarybtn', onClick: () => awardWin(s, round.leftIdx, () => renderCrewBattle({ go })) },
+  verdict.appendChild(el('button', { class: 'primarybtn', onClick: () => awardWin(s, round.leftIdx, () => window.MicDrop.go('crew-battle', { replace: true })) },
     `${left.name} wins this bar`));
-  verdict.appendChild(el('button', { class: 'primarybtn violet', onClick: () => awardWin(s, round.rightIdx, () => renderCrewBattle({ go })) },
+  verdict.appendChild(el('button', { class: 'primarybtn violet', onClick: () => awardWin(s, round.rightIdx, () => window.MicDrop.go('crew-battle', { replace: true })) },
     `${right.name} wins this bar`));
   actions.appendChild(verdict);
 
