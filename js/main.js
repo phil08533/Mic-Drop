@@ -80,7 +80,10 @@ document.addEventListener('keydown', (e) => {
 // --- boot ---
 async function boot() {
   // Apply persisted settings (theme is applied in state.js on import).
-  if (settings.get('reducedMotion')) document.documentElement.style.setProperty('--motion', 'none');
+  if (settings.get('reducedMotion')) {
+    document.documentElement.style.setProperty('--motion', 'none');
+    document.documentElement.setAttribute('data-reduce-motion', '');
+  }
   try {
     await loadDecks();
     go('home', { replace: true });
