@@ -1,8 +1,8 @@
 // Mic Drop service worker. App-shell cache for offline play.
-// Music files are NOT precached — they're network/range-fetched and the
-// browser can decide what to keep.
+// Music files and the visualizer library are NOT precached; they're cached
+// the first time they're used.
 
-const CACHE = 'micdrop-v3';
+const CACHE = 'micdrop-v4';
 const SHELL = [
   './',
   './index.html',
@@ -10,22 +10,29 @@ const SHELL = [
   './js/main.js',
   './js/state.js',
   './js/ui.js',
+  './js/icons.js',
   './js/cards.js',
+  './js/bout.js',
+  './js/crowd.js',
+  './js/sfx.js',
+  './js/fire.js',
+  './js/stagefx.js',
   './js/teamBattle.js',
   './js/kingOfHill.js',
   './js/music.js',
   './js/mixer.js',
+  './js/synth.js',
+  './js/beatstore.js',
+  './js/beatlab.js',
+  './js/visualizer.js',
   './js/settings.js',
   './data/burns.json',
   './data/boasts.json',
   './data/rhymes.json',
+  './data/twists.json',
   './music/manifest.json',
   './manifest.json',
   './assets/favicon.svg',
-  './assets/flames-back.svg',
-  './assets/flames-mid.svg',
-  './assets/flames-front.svg',
-  './assets/flame-mic.svg',
   './assets/icon-192.png',
   './assets/icon-512.png',
 ];

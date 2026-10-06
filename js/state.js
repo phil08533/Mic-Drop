@@ -5,16 +5,15 @@ const STORAGE_KEY = 'micdrop:settings:v1';
 
 const DEFAULTS = {
   musicVolume: 0.7,
-  sfxVolume: 0.5,
+  sfxVolume: 0.6,
   sfxOn: true,
   reducedMotion: false,
-  theme: 'dark',           // 'dark' | 'light'
-  roundSeconds: 45,        // length of one bar trade
-  showRhymeHint: true,     // show "use this word in your bars" hint
-  drawCount: {
-    crew: 2,               // burn-or-boast + rhyme
-    koth: 3,               // burn-or-boast + 2 rhyme
-  },
+  theme: 'paper',          // 'paper' | 'night'
+  roundSeconds: 45,        // length of one verse
+  showRhymeHint: true,     // show extra rhyming words on rhyme cards
+  autoBeat: true,          // the bell drops a beat if nothing's playing
+  twists: true,            // some bouts get a twist card
+  crowdMeter: true,        // offer the mic-based crowd vote
 };
 
 let cache = null;
@@ -27,6 +26,7 @@ function load() {
   } catch {
     cache = { ...DEFAULTS };
   }
+  if (cache.theme !== 'paper' && cache.theme !== 'night') cache.theme = 'paper';   // old dark/light values
   return cache;
 }
 
@@ -37,24 +37,24 @@ function save() {
 
 export const settings = {
   get(key) { return load()[key]; },
-  set(key, value) { load()[key] = value; save(); applyTheme(); },
+  set(key, value) {
+    load()[key] = value;
+    save();
+    if (key === 'theme') applyTheme();
+    window.dispatchEvent(new CustomEvent('micdrop:settings', { detail: key }));
+  },
   all() { return { ...load() }; },
-  reset() { cache = { ...DEFAULTS }; save(); applyTheme(); },
+  reset() { cache = { ...DEFAULTS }; save(); applyTheme(); window.dispatchEvent(new CustomEvent('micdrop:settings', { detail: '*' })); },
 };
 
 function applyTheme() {
   const theme = load().theme;
   document.documentElement.dataset.theme = theme;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'night' ? '#16140f' : '#eee6d3');
 }
 
 // Run on import so the theme applies before first paint of dynamic UI.
 applyTheme();
-
-// Lightweight pub/sub for things that want to react (music player volume,
-// SFX gate, etc).
-const listeners = new Set();
-export function onSettings(cb) { listeners.add(cb); return () => listeners.delete(cb); }
-export function emitSettings() { for (const cb of listeners) cb(settings.all()); }
 
 // Run-time game state (cleared between sessions).
 export const game = {

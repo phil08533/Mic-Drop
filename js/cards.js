@@ -9,10 +9,11 @@ const DATA = {
   burns: 'data/burns.json',
   boasts: 'data/boasts.json',
   rhymes: 'data/rhymes.json',
+  twists: 'data/twists.json',
 };
 
 let decks = null;
-let pools = { burns: [], boasts: [], rhymes: [] };
+const pools = { burns: [], boasts: [], rhymes: [], twists: [] };
 
 async function loadJson(path) {
   const res = await fetch(path, { cache: 'no-cache' });
@@ -22,17 +23,19 @@ async function loadJson(path) {
 
 export async function loadDecks() {
   if (decks) return decks;
-  const [burns, boasts, rhymes] = await Promise.all([
+  const [burns, boasts, rhymes, twists] = await Promise.all([
     loadJson(DATA.burns),
     loadJson(DATA.boasts),
     loadJson(DATA.rhymes),
+    loadJson(DATA.twists).catch(() => ({ cards: [] })),
   ]);
   decks = {
     burns: burns.cards.map((text, i) => ({ id: `burn-${i}`, kind: 'burn', text })),
     boasts: boasts.cards.map((text, i) => ({ id: `boast-${i}`, kind: 'boast', text })),
     rhymes: rhymes.cards.map((c, i) => ({ id: `rhyme-${i}`, kind: 'rhyme', anchor: c.anchor, words: c.words })),
+    twists: twists.cards.map((c, i) => ({ id: `twist-${i}`, kind: 'twist', ...(typeof c === 'string' ? { text: c } : c) })),
   };
-  refill('burns'); refill('boasts'); refill('rhymes');
+  for (const k of Object.keys(pools)) refill(k);
   return decks;
 }
 
@@ -40,32 +43,30 @@ function refill(which) {
   pools[which] = shuffle(decks[which]);
 }
 
-// Draw a "prompt" card (50/50 burn or boast).
-export function drawPrompt() {
-  const pickBurn = Math.random() < 0.5;
-  return drawFrom(pickBurn ? 'burns' : 'boasts');
+function drawFrom(which) {
+  if (!decks) throw new Error('Decks not loaded yet');
+  if (pools[which].length === 0) refill(which);
+  // copy so a card's flipped state belongs to this hand only
+  return { ...pools[which].pop() };
 }
 
-// Draw a single rhyme card.
+// A "prompt" card: 50/50 burn or boast.
+export function drawPrompt() {
+  return drawFrom(Math.random() < 0.5 ? 'burns' : 'boasts');
+}
+
 export function drawRhyme() {
   return drawFrom('rhymes');
 }
 
-function drawFrom(which) {
-  if (!decks) throw new Error('Decks not loaded yet');
-  if (pools[which].length === 0) refill(which);
-  return pools[which].pop();
-}
+// Crew battle hand: prompt + rhyme. King of the Hill: prompt + two rhymes.
+export function drawHandCrew() { return [drawPrompt(), drawRhyme()]; }
+export function drawHandKoth() { return [drawPrompt(), drawRhyme(), drawRhyme()]; }
 
-// For King of the Hill we draw a small hand of 3 cards:
-// 1 prompt (burn/boast) + 2 rhymes.
-export function drawHandKoth() {
-  return [drawPrompt(), drawRhyme(), drawRhyme()];
-}
-
-// For crew battle we draw 2 cards: 1 prompt + 1 rhyme.
-export function drawHandCrew() {
-  return [drawPrompt(), drawRhyme()];
+// About one bout in three gets a twist both rappers have to follow.
+export function maybeTwist(chance = 0.34) {
+  if (!decks?.twists.length || Math.random() > chance) return null;
+  return drawFrom('twists');
 }
 
 export function ready() { return !!decks; }

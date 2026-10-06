@@ -1,12 +1,16 @@
-// Music drawer: genre picker, two decks with a crossfader, auto-mix, tempo, track list.
-// Audio engine lives in mixer.js. Reads music/manifest.json for genres + tracks.
+// Beats drawer: genre picker, two decks with a crossfader, auto-mix, tempo,
+// track list. Audio engine lives in mixer.js. Reads music/manifest.json, plus
+// the beats saved in the Beat Lab ("My Beats").
 
 import { el, clear, shuffle } from './ui.js';
+import { icon } from './icons.js';
 import { settings } from './state.js';
 import {
-  mixer, getDecks, audioReady, isRunning, position, effBpm, currentFadeX,
-  playTrack, mixTo, cueTrack, setCrossfade, setTempo, setVolume, togglePause, pickNext,
+  mixer, getDecks, audioReady, isPlaying, position, effBpm, currentFadeX, onMixerChange,
+  playTrack, cueTrack, setCrossfade, setTempo, setVolume, togglePause, pickNext, nowPlaying,
 } from './mixer.js';
+import { beatTracks } from './beatstore.js';
+import { openVisualizer } from './visualizer.js';
 
 const drawer = document.getElementById('music-drawer');
 const scrim = document.getElementById('scrim');
@@ -18,7 +22,8 @@ let raf = 0;
 let refs = {};                    // live DOM nodes updated every frame
 
 mixer.volume = settings.get('musicVolume');
-mixer.onChange = () => { if (isOpen()) refreshList(); };
+onMixerChange(() => { if (isOpen()) paint(); });
+window.addEventListener('micdrop:beats', () => { buildQueue(); if (isOpen()) build(); });
 
 const isOpen = () => drawer.getAttribute('aria-hidden') === 'false';
 
@@ -32,6 +37,12 @@ async function loadManifest() {
   }
   for (const g of manifest.genres) for (const t of g.tracks || []) t.genre = g.id;
   return manifest;
+}
+
+function genres() {
+  const list = [...(manifest?.genres || [])];
+  list.push({ id: 'mine', name: 'My Beats', tracks: beatTracks() });
+  return list;
 }
 
 export async function mountMusic() {
@@ -60,8 +71,7 @@ export function applyMusicVolume(v) { setVolume(v); }
 
 // ---------- queue ----------
 function genreTracks() {
-  if (!manifest) return [];
-  const gs = genre === 'all' ? manifest.genres : manifest.genres.filter((g) => g.id === genre);
+  const gs = genre === 'all' ? genres() : genres().filter((g) => g.id === genre);
   return gs.flatMap((g) => g.tracks || []);
 }
 
@@ -70,15 +80,18 @@ function buildQueue() {
   mixer.queue = shuffled ? shuffle(t) : t.slice().sort((a, b) => (a.bpm || 0) - (b.bpm || 0));
 }
 
-const same = (a, b) => a && b && a.file === b.file && a.genre === b.genre;
-const liveTrack = () => (mixer.live != null ? getDecks()[mixer.live].track : null);
+const keyOf = (t) => t && (t.key || `${t.genre}/${t.file}`);
+const same = (a, b) => a && b && keyOf(a) === keyOf(b);
 const fmtBpm = (n) => (n ? Math.round(n) : '—');
 
 // ---------- actions ----------
 function start() {
-  const t = liveTrack() ? null : mixer.queue[0];
-  if (t) playTrack(t).catch(fail);
-  else togglePause();
+  if (!nowPlaying()) {
+    const t = mixer.queue[0];
+    if (t) playTrack(t).catch(fail);
+  } else {
+    togglePause();
+  }
   paint();
 }
 function mixNext() {
@@ -98,34 +111,34 @@ function build() {
   clear(drawer);
   refs = { decks: [], rows: new Map() };
 
-  drawer.appendChild(el('button', { class: 'closebtn', onClick: closeMusic, 'aria-label': 'Close music player' }, 'CLOSE'));
-  drawer.appendChild(el('h2', {}, 'Beats'));
+  drawer.appendChild(el('div', { class: 'drawer-head' },
+    el('h2', {}, 'Beats'),
+    el('button', { class: 'btn small', onClick: () => { closeMusic(); openVisualizer(); } }, icon('wave', 16), 'Visualizer'),
+    el('button', { class: 'btn small icon', onClick: closeMusic, 'aria-label': 'Close beats' }, icon('close', 16))));
   const wrap = el('div', { class: 'mp' });
 
-  // genre pills
-  const genres = el('div', { class: 'genres' });
-  if (!manifest?.genres?.length) {
-    wrap.appendChild(el('p', { class: 'note' }, 'No genres configured. Add one in music/manifest.json.'));
-  }
-  for (const g of [{ id: 'all', name: 'All' }, ...(manifest?.genres || [])]) {
-    genres.appendChild(el('button', {
-      class: g.id === genre ? 'active' : '', onClick: () => selectGenre(g.id),
+  // genre tabs
+  const tabs = el('div', { class: 'tabs', role: 'tablist' });
+  for (const g of [{ id: 'all', name: 'All' }, ...genres()]) {
+    tabs.appendChild(el('button', {
+      class: g.id === genre ? 'on' : '', role: 'tab', 'aria-selected': String(g.id === genre),
+      onClick: () => selectGenre(g.id),
     }, g.name || g.id));
   }
-  wrap.appendChild(genres);
+  wrap.appendChild(tabs);
 
   // two decks
   const decks = el('div', { class: 'decks' });
   getDecks().forEach((d, i) => {
     const r = {
       card: el('div', { class: 'deck' }),
-      title: el('div', { class: 'title' }, '—'),
-      meta: el('div', { class: 'meta' }, ''),
+      title: el('div', { class: 'deck-title' }, '—'),
+      meta: el('div', { class: 'deck-meta' }, ''),
       bar: el('div', { class: 'progress-fill' }),
       dots: [0, 1, 2, 3].map(() => el('i', { class: 'beat' })),
     };
     r.card.append(
-      el('div', { class: 'deck-id' }, `DECK ${d.id}`),
+      el('div', { class: 'deck-id' }, `Deck ${d.id}`),
       r.title, r.meta,
       el('div', { class: 'progress' }, r.bar),
       el('div', { class: 'beats' }, ...r.dots),
@@ -146,116 +159,118 @@ function build() {
   wrap.appendChild(refs.xfLabel);
 
   // transport
-  refs.play = el('button', { class: 'iconbtn', onClick: start, 'aria-label': 'Play / pause' }, '▶');
+  refs.play = el('button', { class: 'btn icon big', onClick: start, 'aria-label': 'Play / pause' });
   const autoBtn = el('button', {
-    class: 'pill' + (mixer.auto ? ' on' : ''), 'aria-pressed': String(mixer.auto),
+    class: 'btn' + (mixer.auto ? ' on' : ''), 'aria-pressed': String(mixer.auto),
     title: 'Automatically blend into the next beat before this one ends',
-    onClick: () => { mixer.auto = !mixer.auto; autoBtn.classList.toggle('on', mixer.auto); autoBtn.setAttribute('aria-pressed', String(mixer.auto)); },
+    onClick: () => {
+      mixer.auto = !mixer.auto;
+      autoBtn.classList.toggle('on', mixer.auto);
+      autoBtn.setAttribute('aria-pressed', String(mixer.auto));
+      paint();
+    },
   }, 'Auto-mix');
   const fade = el('select', {
     class: 'select', 'aria-label': 'Fade length',
     onChange: (e) => { mixer.fadeBars = +e.target.value; },
-  }, ...[2, 4, 8, 16].map((n) => el('option', { value: n, ...(n === mixer.fadeBars ? { selected: '' } : {}) }, `${n} bar fade`)));
-  const shuf = el('button', {
-    class: 'iconbtn', onClick: toggleShuffle, 'aria-label': 'Shuffle', title: shuffled ? 'Shuffle on' : 'Sorted by BPM',
-    style: { color: shuffled ? 'var(--hot)' : 'var(--cream)' },
-  }, '🔀');
+  }, ...[2, 4, 8, 16].map((n) => el('option', { value: n }, `${n}-bar fade`)));
+  fade.value = String(mixer.fadeBars);
   wrap.appendChild(el('div', { class: 'controls' },
-    el('div', { class: 'group' },
-      refs.play,
-      el('button', { class: 'iconbtn', onClick: mixNext, 'aria-label': 'Mix in next beat', title: 'Mix in the next beat' }, '⏭'),
-      autoBtn),
-    el('div', { class: 'group' }, fade, shuf)));
+    refs.play,
+    el('button', { class: 'btn icon', onClick: mixNext, 'aria-label': 'Mix in the next beat', title: 'Mix in the next beat' }, icon('next', 18)),
+    autoBtn,
+    fade,
+    el('button', {
+      class: 'btn icon' + (shuffled ? ' on' : ''), onClick: toggleShuffle, 'aria-label': 'Shuffle',
+      title: shuffled ? 'Shuffled' : 'Sorted by BPM',
+    }, icon('shuffle', 18))));
 
   // tempo
   refs.tempo = el('input', {
     type: 'range', min: 60, max: 160, step: 0.5, value: 90, 'aria-label': 'Tempo',
     onInput: (e) => { setTempo(+e.target.value); refs.tempoVal.textContent = `${Math.round(+e.target.value)} BPM`; },
   });
-  refs.tempoVal = el('span', {}, '— BPM');
-  wrap.appendChild(el('div', { class: 'vol' }, el('span', {}, 'Tempo'), refs.tempo, refs.tempoVal));
+  refs.tempoVal = el('span', { class: 'val' }, '— BPM');
+  wrap.appendChild(el('label', { class: 'slider-row' }, el('span', {}, 'Tempo'), refs.tempo, refs.tempoVal));
 
   // volume
-  const vol = el('div', { class: 'vol' },
-    el('span', {}, 'Vol'),
+  const volVal = el('span', { class: 'val' }, Math.round((settings.get('musicVolume') || 0) * 100) + '%');
+  wrap.appendChild(el('label', { class: 'slider-row' },
+    el('span', {}, 'Volume'),
     el('input', {
-      type: 'range', min: 0, max: 100, value: Math.round((settings.get('musicVolume') || 0) * 100),
+      type: 'range', min: 0, max: 100, value: Math.round((settings.get('musicVolume') || 0) * 100), 'aria-label': 'Volume',
       onInput: (e) => {
         const v = +e.target.value / 100;
         setVolume(v);
         settings.set('musicVolume', v);
-        vol.querySelector('#volval').textContent = e.target.value + '%';
+        volVal.textContent = e.target.value + '%';
       },
     }),
-    el('span', { id: 'volval' }, Math.round((settings.get('musicVolume') || 0) * 100) + '%'));
-  wrap.appendChild(vol);
+    volVal));
 
   // track list
   const list = el('div', { class: 'tracklist' });
   const tracks = mixer.queue;
   if (!tracks.length) {
-    list.appendChild(el('div', { class: 'empty' },
-      'No tracks here. Drop audio files into ', el('span', { class: 'kbd' }, 'music/<genre>/'),
-      ' and list them in ', el('span', { class: 'kbd' }, 'music/manifest.json'), '.'));
+    list.appendChild(genre === 'mine'
+      ? el('div', { class: 'empty' }, 'No saved beats yet. ',
+        el('button', { class: 'btn small', onClick: () => { closeMusic(); window.MicDrop.go('beat-lab'); } }, icon('grid', 14), 'Open the Beat Lab'))
+      : el('div', { class: 'empty' }, 'No tracks here. Drop audio files into ', el('code', {}, 'music/<genre>/'),
+        ' and list them in ', el('code', {}, 'music/manifest.json'), '.'));
   } else {
     const ul = el('ul');
     tracks.forEach((t) => {
       const li = el('li', { onClick: () => playTrack(t).catch(fail), title: 'Play / mix in' },
         el('span', { class: 'tname' }, t.title || t.file),
-        el('span', { class: 'note' }, `${fmtBpm(t.bpm)} BPM`),
+        el('span', { class: 'fine' }, `${fmtBpm(t.bpm)} BPM`),
         el('button', {
-          class: 'cue', title: 'Cue on the other deck, then use the crossfader',
+          class: 'btn small', title: 'Cue on the other deck, then use the crossfader',
           onClick: (e) => { e.stopPropagation(); cueTrack(t).catch(fail); },
-        }, 'CUE'));
+        }, 'Cue'));
       refs.rows.set(t, li);
       ul.appendChild(li);
     });
     list.appendChild(ul);
   }
   wrap.appendChild(list);
-  wrap.appendChild(el('p', { class: 'note' },
-    'Tap a beat to mix it in on the next bar. Matching tempos are locked together; ',
-    'CUE it to blend by hand with the crossfader.'));
+  wrap.appendChild(el('p', { class: 'fine' },
+    'Tap a beat to mix it in on the next bar. Matching tempos lock together. ',
+    'Cue a beat to blend it by hand with the crossfader.'));
 
   drawer.appendChild(wrap);
   paint();
 }
 
-function refreshList() { paint(); }
-
-// per-frame + on-change updates (no DOM rebuild)
 function frame() {
   paint();
   if (isOpen()) raf = requestAnimationFrame(frame);
 }
 
 function paint() {
-  if (!refs.decks) return;
+  if (!refs.decks?.length || !refs.play?.isConnected) return;
   const decks = getDecks();
-  const running = audioReady() && isRunning();
-  const live = liveTrack();
-  refs.play.textContent = running && mixer.live != null ? '⏸' : '▶';
+  const live = nowPlaying();
+  clear(refs.play);
+  refs.play.appendChild(icon(isPlaying() ? 'pause' : 'play', 20));
 
   decks.forEach((d, i) => {
     const r = refs.decks[i];
-    if (!r) return;
-    const on = !!d.src && !!d.track;
+    const on = !!d.track && !!d.buffer;
     const isLive = mixer.live === i;
     r.card.classList.toggle('live', on && isLive);
     r.card.classList.toggle('cued', on && !isLive);
     if (!on) {
-      r.title.textContent = '—'; r.meta.textContent = 'empty';
+      r.title.textContent = '—'; r.meta.textContent = 'Empty';
       r.bar.style.width = '0%';
       r.dots.forEach((b) => b.classList.remove('on', 'down'));
       return;
     }
     r.title.textContent = d.track.title || d.track.file;
-    r.meta.textContent = `${fmtBpm(effBpm(d))} BPM · ${d.synced ? 'SYNC' : 'FREE'}`;
+    r.meta.textContent = `${fmtBpm(effBpm(d))} BPM · ${d.synced ? 'Synced' : 'Free'}`;
     const p = position(d);
-    const len = d.loopLen;
-    r.bar.style.width = `${Math.max(0, Math.min(1, p / len)) * 100}%`;
+    r.bar.style.width = `${Math.max(0, Math.min(1, p / d.loopLen)) * 100}%`;
     const barLen = d.track.bpm ? 240 / d.track.bpm : 0;
-    const beat = barLen && p >= 0 ? Math.floor(((p % barLen) / barLen) * 4) : -1;
+    const beat = barLen && p >= 0 && isPlaying() ? Math.floor(((p % barLen) / barLen) * 4) : -1;
     r.dots.forEach((b, k) => {
       b.classList.toggle('on', k === beat);
       b.classList.toggle('down', k === beat && beat === 0);
@@ -264,9 +279,10 @@ function paint() {
 
   // crossfader follows the auto-fade; don't fight the user's finger
   if (audioReady() && document.activeElement !== refs.xf) refs.xf.value = Math.round(currentFadeX() * 1000);
-  const f = mixer.fade;
-  refs.xfLabel.textContent = f ? 'Mixing…' : mixer.live == null ? 'Pick a beat to start'
-    : decks[1 - mixer.live].src ? 'Cued: slide the crossfader to blend' : (mixer.auto ? 'Auto-mix on' : 'Auto-mix off');
+  refs.xfLabel.textContent = mixer.fade ? 'Mixing…'
+    : mixer.live == null ? 'Pick a beat to start'
+      : decks[1 - mixer.live].buffer ? 'Cued: slide the crossfader to blend'
+        : mixer.auto ? 'Auto-mix is on' : 'Auto-mix is off';
 
   // tempo slider tracks the live deck, ±8% around its native BPM
   if (live && live.bpm && document.activeElement !== refs.tempo) {
@@ -276,7 +292,6 @@ function paint() {
     refs.tempoVal.textContent = `${Math.round(mixer.tempo)} BPM`;
   }
 
-  // highlight rows
   for (const [t, li] of refs.rows) {
     li.classList.toggle('playing', same(t, live));
     li.classList.toggle('queued', !same(t, live) && decks.some((d) => same(d.track, t)));

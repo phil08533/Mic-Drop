@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="paper">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0e0e10" />
-  <meta name="description" content="A rap battle party game. Crew Battle or King of the Hill." />
+  <meta name="theme-color" content="#eee6d3" />
+  <meta name="description" content="The rap battle party game. Draw a card, spit a verse, let the room decide." />
   <title>Mic Drop</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
@@ -12,123 +12,134 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" />
+        href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wdth,wght@62..125,400..800&family=Courier+Prime:wght@400;700&display=swap" />
   <link rel="stylesheet" href="styles/main.css" />
 </head>
 <body>
-  <div class="flames" aria-hidden="true">
-    <div class="flame f-back"></div>
-    <div class="flame f-mid"></div>
-    <div class="flame f-front"></div>
-    <div class="embers"></div>
-  </div>
+  <canvas id="fire" class="fire" aria-hidden="true"></canvas>
+
   <div id="app" class="app" data-screen="loading">
     <header class="topbar">
-      <button class="iconbtn" id="back-btn" aria-label="Back" hidden>
-        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-          <path d="M15 4 L7 12 L15 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+      <button class="btn icon" id="back-btn" aria-label="Back" hidden>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4.5L7.5 12l7.5 7.5"/></svg>
       </button>
-      <a class="brand" href="#" data-action="home" aria-label="Mic Drop home">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 32 32" width="28" height="28">
-            <circle cx="16" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="2.4"/>
-            <path d="M16 17 L16 26" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-            <path d="M9 26 L23 26" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-          </svg>
-        </span>
-        <span class="brand-text">Mic<span class="brand-dot">.</span>Drop</span>
-      </a>
+      <a class="brand" href="#" data-action="home" aria-label="Mic Drop, home">Mic Drop</a>
       <div class="topbar-spacer"></div>
-      <button class="iconbtn" id="music-toggle" aria-label="Music">
-        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-          <path d="M9 18 V6 L20 4 V16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
-          <circle cx="7" cy="18" r="2.5" fill="none" stroke="currentColor" stroke-width="2.2"/>
-          <circle cx="18" cy="16" r="2.5" fill="none" stroke="currentColor" stroke-width="2.2"/>
-        </svg>
+      <button class="np" id="now-playing" data-action="open-music" title="Open the Beats player" hidden>
+        <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="np-title"></span>
+        <span class="np-bpm"></span>
       </button>
-      <button class="iconbtn" id="settings-toggle" aria-label="Settings">
-        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-          <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2.2"/>
-          <path d="M12 2 V5 M12 19 V22 M2 12 H5 M19 12 H22 M4.9 4.9 L7 7 M17 17 L19.1 19.1 M4.9 19.1 L7 17 M17 7 L19.1 4.9"
-                stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-        </svg>
+      <button class="btn small nav-lab" data-action="beat-lab" title="Beat Lab">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM16 10h4v4h-4zM10 16h4v4h-4z" fill="currentColor"/><path d="M10 10h4v4h-4zM4 16h4v4H4zM16 16h4v4h-4z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Beat Lab</span>
+      </button>
+      <button class="btn icon" data-action="open-viz" aria-label="Visualizer" title="Visualizer">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12h3l2-6 3.5 13 3.5-11 2.2 6.5 1.3-2.5h3.5"/></svg>
+      </button>
+      <button class="btn icon" data-action="open-music" aria-label="Beats" title="Beats">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>
+      </button>
+      <button class="btn icon" data-action="open-settings" aria-label="Settings" title="Settings">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>
       </button>
     </header>
 
     <main id="screen" class="screen" aria-live="polite">
-      <div class="loader">Loading the booth&hellip;</div>
+      <div class="loader">Setting up the booth&hellip;</div>
     </main>
 
-    <aside class="drawer" id="music-drawer" aria-hidden="true" aria-label="Music player"></aside>
+    <aside class="drawer" id="music-drawer" aria-hidden="true" aria-label="Beats player"></aside>
     <aside class="drawer" id="settings-drawer" aria-hidden="true" aria-label="Settings"></aside>
     <div class="scrim" id="scrim" hidden></div>
   </div>
 
   <template id="tpl-home">
     <section class="home">
-      <h1 class="display">
-        <span class="line one">Grab</span>
-        <span class="line two">the <em>mic.</em></span>
-        <span class="line three">Drop the room.</span>
-      </h1>
-      <img class="flame-mic" src="assets/flame-mic.svg" alt="" width="120" height="156" />
-      <p class="tag">A rap battle party game. No skill required, just nerve.</p>
-      <div class="modes">
-        <button class="mode-card" data-action="start-crew">
-          <span class="mode-tag">3+ teams</span>
-          <h2>Crew Battle</h2>
-          <p>Three teams. Oldest combined age starts. The team to the left judges. Trade bars one-on-one.</p>
-          <span class="mode-cta">Start a battle &rarr;</span>
+      <div class="poster">
+        <p class="poster-top"><span>Tonight</span><span>Live from your living room</span><span>No cover</span></p>
+        <h1 class="wordmark" aria-label="Mic Drop"><span>Mic</span><span>Drop</span></h1>
+        <p class="poster-sub">The rap battle party game. Draw a card, spit a verse, let the room decide.</p>
+      </div>
+      <div class="bill">
+        <button class="event red" data-action="start-crew">
+          <span class="event-tag">Main event</span>
+          <span class="event-title">Crew Battle</span>
+          <span class="event-desc">Two or three crews trade bars one-on-one. The crew sitting out judges. Most points takes the belt.</span>
+          <span class="event-meta">2–3 crews · any size</span>
+          <span class="event-cta">Step in &rarr;</span>
         </button>
-        <button class="mode-card alt" data-action="start-koth">
-          <span class="mode-tag">Solo / pass-and-play</span>
-          <h2>King of the Hill</h2>
-          <p>Anyone can jump in. Three cards each. Winner stays on the mic till they get booted.</p>
-          <span class="mode-cta">Take the mic &rarr;</span>
+        <button class="event gold" data-action="start-koth">
+          <span class="event-tag">Open cypher</span>
+          <span class="event-title">King of the Hill</span>
+          <span class="event-desc">Everybody in one line. Two step up and the room picks. Winner keeps the crown until somebody takes it.</span>
+          <span class="event-meta">2+ rappers · jump in any time</span>
+          <span class="event-cta">Take the hill &rarr;</span>
+        </button>
+        <button class="event blue" data-action="beat-lab">
+          <span class="event-tag">Undercard</span>
+          <span class="event-title">Beat Lab</span>
+          <span class="event-desc">No beat? Make one. Sixteen steps, an 808 and chords that move for you. Save it, then battle on it.</span>
+          <span class="event-meta">Drum machine · WAV export</span>
+          <span class="event-cta">Build a beat &rarr;</span>
         </button>
       </div>
-      <footer class="home-foot">
-        <button class="ghostbtn" data-action="how">How it works</button>
-        <button class="ghostbtn" data-action="open-music">Pick a beat</button>
-        <button class="ghostbtn" data-action="open-settings">Settings</button>
-      </footer>
+      <div class="home-foot">
+        <div class="btnrow">
+          <button class="btn" data-action="how">How to play</button>
+          <button class="btn" data-action="open-music">Beats</button>
+          <button class="btn" data-action="open-viz">Visualizer</button>
+        </div>
+        <p class="fine">No weapons but words. Roast the bars, not the person.</p>
+      </div>
     </section>
   </template>
 
   <template id="tpl-how">
     <section class="how">
-      <h2 class="screen-title">How it works</h2>
-      <div class="how-grid">
-        <article>
-          <h3>Crew Battle</h3>
-          <ol>
-            <li>Set up three teams. Enter the rough age of each member.</li>
-            <li>The team with the highest combined age battles first against the team to their right.</li>
-            <li>The third team — to the battling team&rsquo;s left — judges.</li>
-            <li>Each player draws a Burn or Boast card, plus a Rhyme card with a word they have to land in their bars.</li>
-            <li>Players go one-on-one, alternating: T1P1 vs T2P1, then T1P2 vs T2P2, and so on.</li>
-            <li>After the round, judges award the win. Rotate. New battlers, new judges.</li>
-          </ol>
+      <header class="screen-head">
+        <p class="kicker">Official rules</p>
+        <h2 class="screen-title">How a bout <em>works</em></h2>
+      </header>
+      <ol class="rules">
+        <li><h3>Draw</h3><p>Both rappers flip their cards: a <b>Burn</b> (roast the other rapper) or a <b>Boast</b> (hype yourself), plus a <b>Rhyme</b> word to land. Sometimes a <b>Twist</b> adds a rule for both.</p></li>
+        <li><h3>Ding ding</h3><p>The bell starts the clock and drops the beat. The first rapper gets one verse, then the mic goes across for the answer.</p></li>
+        <li><h3>Decide</h3><p>The judges pick a winner, or use the <b>Crowd meter</b>: the room cheers for each rapper and the mic hears who got the bigger reaction.</p></li>
+        <li><h3>Mic drop</h3><p>Somebody lands a bar so cold the room loses it? Hit <b>Mic drop</b> during their verse. Instant win, double points.</p></li>
+      </ol>
+      <div class="how-modes">
+        <article class="panel">
+          <h3 class="panel-title">Crew Battle</h3>
+          <ul>
+            <li>2 or 3 crews, any number of rappers each.</li>
+            <li>Rappers go one-on-one down the lineup.</li>
+            <li>With three crews, the one sitting out judges, then everybody rotates: every crew battles twice and judges once.</li>
+            <li>A bout win is 1 point, a mic drop 2. Ties go to sudden death.</li>
+          </ul>
         </article>
-        <article>
-          <h3>King of the Hill</h3>
-          <ol>
-            <li>Add anyone who wants to play to the roster.</li>
-            <li>Two players go up. Each draws three cards (Burn/Boast + two Rhymes).</li>
-            <li>Trade bars back and forth using your cards.</li>
-            <li>The room votes. Winner stays on the mic. Loser sits down.</li>
-            <li>Next challenger is drawn from the bench. Anyone can jump in mid-game.</li>
-          </ol>
+        <article class="panel">
+          <h3 class="panel-title">King of the Hill</h3>
+          <ul>
+            <li>Everybody joins one line.</li>
+            <li>The challenger raps first and the king answers.</li>
+            <li>The winner keeps the crown, the loser goes to the back of the line.</li>
+            <li>Three in a row and you're on fire. Longest streak takes the night.</li>
+          </ul>
         </article>
-        <article class="how-tip">
-          <h3>House rules</h3>
-          <p>Keep it playful. No personal stuff that would actually wound someone.
-          The cards are prompts, not orders &mdash; bend them, ignore them, or stack
-          two together if it makes a better bar.</p>
+        <article class="panel">
+          <h3 class="panel-title">House rules</h3>
+          <ul>
+            <li>Roast the bars, not the person. Nothing that would really hurt.</li>
+            <li>Cards are prompts, not orders. Bend them if it makes a better bar.</li>
+            <li>The soundboard has an air horn. Use it wisely. Or don't.</li>
+            <li>Space rings the bell and pauses the clock.</li>
+          </ul>
         </article>
       </div>
-      <button class="ghostbtn" data-action="home">&larr; Back</button>
+      <div class="btnrow">
+        <button class="btn ink big" data-action="start-crew">Start a Crew Battle</button>
+        <button class="btn" data-action="start-koth">Start King of the Hill</button>
+      </div>
     </section>
   </template>
 
