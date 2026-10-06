@@ -2,7 +2,7 @@
 // Music files are NOT precached — they're network/range-fetched and the
 // browser can decide what to keep.
 
-const CACHE = 'micdrop-v1';
+const CACHE = 'micdrop-v2';
 const SHELL = [
   './',
   './index.html',
@@ -21,6 +21,10 @@ const SHELL = [
   './music/manifest.json',
   './manifest.json',
   './assets/favicon.svg',
+  './assets/flames-back.svg',
+  './assets/flames-mid.svg',
+  './assets/flames-front.svg',
+  './assets/flame-mic.svg',
   './assets/icon-192.png',
   './assets/icon-512.png',
 ];

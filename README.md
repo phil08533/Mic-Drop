@@ -91,6 +91,8 @@ service-worker.js       Offline cache
 - [x] Settings panel (volume, SFX, reduced motion, dark/light)
 - [x] Polished hand-styled UI (no generic gradient look)
 - [x] App icon + favicon
-- [ ] Drop real audio tracks into `music/<genre>/` folders
+- [x] Flame backdrop + flame mic art (`assets/flame*.svg`, regenerate with `tools/make_flames.py`)
+- [x] Starter beats, 2 per genre (original, synthesised by `tools/make_beats.py`)
+- [ ] Optional: swap in or add more produced tracks in `music/<genre>/` and list them in `music/manifest.json`
 - [ ] Take screenshots and write itch.io page copy
 - [ ] Optional: more burn / boast / rhyme cards (community-add friendly)

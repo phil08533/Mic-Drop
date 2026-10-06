@@ -726,3 +726,45 @@ input[type=range]::-moz-range-thumb {
   src: local("Bungee");
   font-display: swap;
 }
+
+/* ============ FLAME BACKDROP ============ */
+.flames {
+  position: fixed; left: 0; right: 0; bottom: 0; height: 46vh;
+  pointer-events: none; z-index: 0; overflow: hidden;
+  -webkit-mask-image: linear-gradient(to top, #000 55%, transparent);
+  mask-image: linear-gradient(to top, #000 55%, transparent);
+}
+.flame {
+  position: absolute; left: -5%; right: -5%; bottom: -4%;
+  background-repeat: repeat-x; background-position: 0 100%; background-size: 1600px 100%;
+  transform-origin: 50% 100%;
+}
+.f-back  { height: 100%; background-image: url("../assets/flames-back.svg");  opacity: .55; animation: flick-a 3.1s ease-in-out infinite alternate, drift 38s linear infinite; }
+.f-mid   { height: 78%;  background-image: url("../assets/flames-mid.svg");   opacity: .6;  animation: flick-b 2.3s ease-in-out infinite alternate, drift 27s linear infinite reverse; }
+.f-front { height: 52%;  background-image: url("../assets/flames-front.svg"); opacity: .55; animation: flick-a 1.7s ease-in-out infinite alternate, drift 19s linear infinite; }
+@keyframes flick-a { from { transform: scaleY(.9) skewX(-1.5deg); } to { transform: scaleY(1.08) skewX(1.5deg); } }
+@keyframes flick-b { from { transform: scaleY(1.06) skewX(1.2deg); } to { transform: scaleY(.88) skewX(-1.2deg); } }
+@keyframes drift { to { background-position-x: 1600px; } }
+.embers {
+  position: absolute; left: 0; bottom: 0; width: 2px; height: 2px;
+  border-radius: 50%; background: transparent;
+  box-shadow: 79vw -18vh 0 1px #ffb03a,45vw -35vh 0 0px #ffb03a,59vw -17vh 0 1px #ffb03a,6vw -12vh 0 0px #ffb03a,47vw -32vh 0 0px #ffb03a,48vw -36vh 0 0px #ffb03a,73vw -17vh 0 0px #ffb03a,93vw -15vh 0 0px #ffb03a,35vw -13vh 0 0px #ffb03a,20vw -6vh 0 0px #ffb03a,79vw -30vh 0 0px #ffb03a,16vw -2vh 0 0px #ffb03a,26vw -15vh 0 0px #ffb03a,21vw -20vh 0 0px #ffb03a,25vw -36vh 0 1px #ffb03a,80vw -15vh 0 0px #ffb03a,88vw -14vh 0 0px #ffb03a,38vw -3vh 0 0px #ffb03a,53vw -12vh 0 0px #ffb03a,33vw -6vh 0 0px #ffb03a,38vw -40vh 0 1px #ffb03a,0vw -40vh 0 1px #ffb03a,90vw -23vh 0 0px #ffb03a,39vw -24vh 0 0px #ffb03a,61vw -22vh 0 0px #ffb03a,61vw -32vh 0 1px #ffb03a,22vw -5vh 0 0px #ffb03a,2vw -24vh 0 0px #ffb03a;
+  animation: rise 7s linear infinite;
+}
+@keyframes rise {
+  0%   { transform: translateY(6vh);  opacity: 0; }
+  20%  { opacity: .85; }
+  100% { transform: translateY(-14vh); opacity: 0; }
+}
+html[data-reduce-motion] .flame, html[data-reduce-motion] .embers { animation: none; }
+html[data-reduce-motion] .embers { display: none; }
+[data-theme="light"] .flames { opacity: .35; }
+
+.flame-mic {
+  display: block; margin: 0 0 14px; height: auto;
+  filter: drop-shadow(0 8px 24px rgba(255,90,31,.45));
+  animation: mic-bob 4s ease-in-out infinite alternate;
+}
+@keyframes mic-bob { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-6px) rotate(2deg); } }
+html[data-reduce-motion] .flame-mic { animation: none; }
+@media (max-width: 640px) { .flame-mic { width: 84px; } }

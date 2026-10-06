@@ -16,6 +16,12 @@
   <link rel="stylesheet" href="styles/main.css" />
 </head>
 <body>
+  <div class="flames" aria-hidden="true">
+    <div class="flame f-back"></div>
+    <div class="flame f-mid"></div>
+    <div class="flame f-front"></div>
+    <div class="embers"></div>
+  </div>
   <div id="app" class="app" data-screen="loading">
     <header class="topbar">
       <button class="iconbtn" id="back-btn" aria-label="Back" hidden>
@@ -66,6 +72,7 @@
         <span class="line two">the <em>mic.</em></span>
         <span class="line three">Drop the room.</span>
       </h1>
+      <img class="flame-mic" src="assets/flame-mic.svg" alt="" width="120" height="156" />
       <p class="tag">A rap battle party game. No skill required, just nerve.</p>
       <div class="modes">
         <button class="mode-card" data-action="start-crew">

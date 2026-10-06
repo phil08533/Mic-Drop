@@ -96,6 +96,7 @@ function render() {
     toggle('reduce-motion', settings.get('reducedMotion'), (v) => {
       settings.set('reducedMotion', v);
       document.documentElement.style.setProperty('--motion', v ? 'none' : '');
+      document.documentElement.toggleAttribute('data-reduce-motion', v);
     })));
 
   // Theme

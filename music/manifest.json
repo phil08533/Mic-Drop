@@ -4,22 +4,66 @@
     {
       "id": "lofi",
       "name": "Lo-Fi",
-      "tracks": []
+      "tracks": [
+        {
+          "file": "rainy-window.mp3",
+          "title": "Rainy Window",
+          "artist": "Mic Drop House Band"
+        },
+        {
+          "file": "late-night-cypher.mp3",
+          "title": "Late Night Cypher",
+          "artist": "Mic Drop House Band"
+        }
+      ]
     },
     {
       "id": "boombap",
       "name": "Boom Bap",
-      "tracks": []
+      "tracks": [
+        {
+          "file": "basement-tapes.mp3",
+          "title": "Basement Tapes",
+          "artist": "Mic Drop House Band"
+        },
+        {
+          "file": "concrete-jungle.mp3",
+          "title": "Concrete Jungle",
+          "artist": "Mic Drop House Band"
+        }
+      ]
     },
     {
       "id": "trap",
       "name": "Trap",
-      "tracks": []
+      "tracks": [
+        {
+          "file": "smoke-signals.mp3",
+          "title": "Smoke Signals",
+          "artist": "Mic Drop House Band"
+        },
+        {
+          "file": "cold-chain.mp3",
+          "title": "Cold Chain",
+          "artist": "Mic Drop House Band"
+        }
+      ]
     },
     {
       "id": "electronic",
       "name": "Electronic",
-      "tracks": []
+      "tracks": [
+        {
+          "file": "neon-booth.mp3",
+          "title": "Neon Booth",
+          "artist": "Mic Drop House Band"
+        },
+        {
+          "file": "overclock.mp3",
+          "title": "Overclock",
+          "artist": "Mic Drop House Band"
+        }
+      ]
     }
   ]
 }
