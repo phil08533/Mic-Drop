@@ -45,58 +45,36 @@ export function shuffle(arr) {
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Simple in-page sound effects via WebAudio (no asset dependency).
-// Quiet, short, used to punctuate card flips and round transitions.
-let _ac = null;
-function ac() {
-  if (!_ac) _ac = new (window.AudioContext || window.webkitAudioContext)();
-  if (_ac.state === 'suspended') _ac.tryResume?.() ?? _ac.resume?.();
-  return _ac;
+// In-page yes/no dialog. Resolves true/false.
+export function ask(message, { ok = 'OK', cancel = 'Cancel', danger = false } = {}) {
+  return new Promise((resolve) => {
+    const done = (v) => { wrap.remove(); document.removeEventListener('keydown', onKey); resolve(v); };
+    const onKey = (e) => { if (e.key === 'Escape') done(false); };
+    const okBtn = el('button', { class: 'btn ' + (danger ? 'red' : 'ink'), onClick: () => done(true) }, ok);
+    const wrap = el('div', { class: 'dialog-wrap', onClick: (e) => { if (e.target === wrap) done(false); } },
+      el('div', { class: 'dialog', role: 'alertdialog', 'aria-modal': 'true' },
+        el('p', {}, message),
+        el('div', { class: 'btnrow end' },
+          el('button', { class: 'btn', onClick: () => done(false) }, cancel),
+          okBtn)));
+    document.body.appendChild(wrap);
+    document.addEventListener('keydown', onKey);
+    okBtn.focus();
+  });
 }
-export function sfx(kind, { volume = 0.3 } = {}) {
-  try {
-    const a = ac();
-    const t0 = a.currentTime;
-    const g = a.createGain();
-    g.gain.setValueAtTime(0, t0);
-    g.connect(a.destination);
-    const o = a.createOscillator();
-    o.connect(g);
 
-    let dur = 0.18;
-    if (kind === 'flip') {
-      o.type = 'square';
-      o.frequency.setValueAtTime(440, t0);
-      o.frequency.exponentialRampToValueAtTime(880, t0 + 0.08);
-      g.gain.linearRampToValueAtTime(volume, t0 + 0.005);
-      g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.18);
-    } else if (kind === 'win') {
-      o.type = 'triangle';
-      o.frequency.setValueAtTime(523, t0);
-      o.frequency.setValueAtTime(659, t0 + 0.08);
-      o.frequency.setValueAtTime(784, t0 + 0.16);
-      g.gain.linearRampToValueAtTime(volume, t0 + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.32);
-      dur = 0.34;
-    } else if (kind === 'tick') {
-      o.type = 'square';
-      o.frequency.setValueAtTime(900, t0);
-      g.gain.linearRampToValueAtTime(volume * 0.4, t0 + 0.005);
-      g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.05);
-      dur = 0.06;
-    } else if (kind === 'horn') {
-      o.type = 'sawtooth';
-      o.frequency.setValueAtTime(180, t0);
-      o.frequency.linearRampToValueAtTime(280, t0 + 0.5);
-      g.gain.linearRampToValueAtTime(volume * 0.6, t0 + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.6);
-      dur = 0.6;
-    } else {
-      o.frequency.setValueAtTime(660, t0);
-      g.gain.linearRampToValueAtTime(volume, t0 + 0.005);
-      g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.15);
-    }
-    o.start(t0);
-    o.stop(t0 + dur + 0.05);
-  } catch { /* noop */ }
+// Small note that slides up from the bottom and goes away.
+export function toast(message, ms = 2600) {
+  const t = el('div', { class: 'toast', role: 'status' }, message);
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('in'));
+  setTimeout(() => { t.classList.remove('in'); setTimeout(() => t.remove(), 300); }, ms);
+}
+
+// Rubber stamp slammed across the screen ("TIME!", "MIC DROP!").
+export function stamp(text, tone = 'red', ms = 1300) {
+  const s = el('div', { class: `stamp ${tone}`, 'aria-hidden': 'true' }, el('span', {}, text));
+  s.style.setProperty('--hold', `${Math.max(300, ms - 300)}ms`);
+  document.body.appendChild(s);
+  setTimeout(() => s.remove(), ms);
 }

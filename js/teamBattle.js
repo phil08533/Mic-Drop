@@ -1,409 +1,257 @@
-// Crew Battle: 3 teams, oldest combined age starts vs the team to their right,
-// the team to their left judges. Players go one-on-one down the lineup.
+// Crew Battle: 2 or 3 crews. With three, two crews trade bars one-on-one while
+// the third judges, and the roles rotate so every crew battles twice and judges
+// once. With two, the whole room judges. A bout win is 1 point, a mic drop 2.
 
-import { el, clear, sleep, sfx } from './ui.js';
+import { el, clear, ask, shuffle } from './ui.js';
+import { icon } from './icons.js';
 import { settings, game } from './state.js';
-import { drawHandCrew } from './cards.js';
+import { drawHandCrew, maybeTwist } from './cards.js';
+import { newBout, renderBout, renderPodium } from './bout.js';
+import { stagefx } from './stagefx.js';
+import { sfx } from './sfx.js';
 
-const TEAM_COLORS = ['#ff4d2e', '#ffb03a', '#b73fff'];
-const TEAM_DEFAULT_NAMES = ['Crew Alpha', 'Crew Bravo', 'Crew Charlie'];
+const COLORS = ['red', 'blue', 'gold'];
+const NAMES = ['Red Crew', 'Blue Crew', 'Gold Crew'];
 
 function newCrewState() {
   return {
+    count: 3,
     teams: [0, 1, 2].map((i) => ({
-      id: i,
-      name: TEAM_DEFAULT_NAMES[i],
-      color: TEAM_COLORS[i],
-      players: [
-        { name: '', age: '' },
-        { name: '', age: '' },
-      ],
-      score: 0,
+      name: NAMES[i], color: COLORS[i],
+      players: [{ name: '', age: '' }, { name: '', age: '' }],
+      score: 0, drops: 0,
     })),
     started: false,
-    // Battle state
-    rotation: [],         // [{leftIdx, rightIdx, judgeIdx}]
-    roundIndex: 0,
-    pairIndex: 0,         // which pair within the round
-    cards: { left: null, right: null },  // currently revealed cards
-    revealed: { left: false, right: false },
-    timer: null,          // {remaining, running}
   };
 }
 
-// ====== SETUP SCREEN ======
+const active = (s) => s.teams.slice(0, s.count);
+
+// ====== SETUP ======
 export function renderCrewSetup({ go }) {
   if (!game.crew) game.crew = newCrewState();
   const s = game.crew;
+  stagefx.base(0.3);
 
   const root = el('section', { class: 'setup' });
+  root.appendChild(el('header', { class: 'screen-head' },
+    el('p', { class: 'kicker' }, 'Main event · Crew Battle'),
+    el('h2', { class: 'screen-title' }, 'Pick your ', el('em', {}, 'crews.')),
+    el('p', { class: 'lede' },
+      'Crews trade bars one rapper at a time. With three crews, the crew sitting out judges and everybody rotates. ',
+      'Ages are optional: the oldest crew goes first, or we flip a coin.')));
 
-  root.appendChild(el('h2', { class: 'screen-title' }, 'Set up the ', el('em', {}, 'crews.')));
-  root.appendChild(el('p', { class: 'screen-sub' },
-    'Three teams. Drop in names + rough ages. Highest combined age battles first; the team to their left judges.'));
+  const seg = el('div', { class: 'seg', role: 'radiogroup', 'aria-label': 'Number of crews' },
+    ...[2, 3].map((n) => el('button', {
+      class: s.count === n ? 'on' : '', role: 'radio', 'aria-checked': String(s.count === n),
+      onClick: () => { s.count = n; go('crew-setup', { replace: true }); },
+    }, `${n} crews`)));
+  root.appendChild(seg);
 
-  const grid = el('div', { class: 'team-grid' });
-
-  s.teams.forEach((team, idx) => {
-    const card = el('article', { class: 'team-card' });
-
-    const head = el('h3', {},
-      el('span', { class: 'swatch', style: { background: team.color } }),
-      el('span', {}, `Team ${idx + 1}`),
-    );
-    card.appendChild(head);
-
-    const nameInput = el('input', {
-      class: 'input name-input', value: team.name, maxlength: 24,
-      onInput: (e) => { team.name = e.target.value; },
-    });
-    card.appendChild(nameInput);
-
-    const playersWrap = el('div', { class: 'players' });
-    const renderPlayers = () => {
-      clear(playersWrap);
-      team.players.forEach((p, i) => {
-        const row = el('div', { class: 'player-row' },
-          el('input', {
-            class: 'input', placeholder: `Player ${i + 1} name`, value: p.name, maxlength: 22,
-            onInput: (e) => { p.name = e.target.value; updateMeta(); },
-          }),
-          el('input', {
-            class: 'input age', placeholder: 'age', type: 'number', min: 1, max: 120, value: p.age,
-            onInput: (e) => { p.age = e.target.value; updateMeta(); },
-          }),
-          el('button', { class: 'removebtn', 'aria-label': `Remove player ${i + 1}`, onClick: () => {
-            if (team.players.length <= 1) return;
-            team.players.splice(i, 1); renderPlayers(); updateMeta();
-          } }, '×'),
-        );
-        playersWrap.appendChild(row);
-      });
-    };
-    renderPlayers();
-    card.appendChild(playersWrap);
-
-    const addBtn = el('button', { class: 'btn add-player', onClick: () => {
-      team.players.push({ name: '', age: '' }); renderPlayers(); updateMeta();
-    } }, '+ Add player');
-    card.appendChild(addBtn);
-
-    const meta = el('div', { class: 'team-meta' });
-    function updateMeta() {
-      const total = team.players.reduce((a, p) => a + (parseInt(p.age, 10) || 0), 0);
-      meta.textContent = `${team.players.length} player${team.players.length === 1 ? '' : 's'} · combined age ${total}`;
-    }
-    updateMeta();
-    card.appendChild(meta);
-
-    grid.appendChild(card);
-  });
-
+  const grid = el('div', { class: `team-grid n${s.count}` });
+  active(s).forEach((team) => grid.appendChild(teamCard(team)));
   root.appendChild(grid);
 
-  const controls = el('div', { class: 'btnrow' });
-
-  controls.appendChild(el('button', { class: 'primarybtn', onClick: () => {
-    const ok = validate(s);
-    if (ok !== true) { alert(ok); return; }
-    startBattle(s);
-    go('crew-battle');
-  } }, '🎤 Start the battle'));
-
-  controls.appendChild(el('button', { class: 'ghostbtn', onClick: () => {
-    if (confirm('Clear setup?')) { game.crew = newCrewState(); go('crew-setup', { replace: true }); }
-  } }, 'Reset'));
-
-  root.appendChild(controls);
+  const err = el('p', { class: 'form-error', role: 'alert' });
+  root.appendChild(err);
+  root.appendChild(el('div', { class: 'btnrow' },
+    el('button', { class: 'btn ink big', onClick: () => {
+      const problem = validate(s);
+      if (problem) { err.textContent = problem; return; }
+      startBattle(s);
+      go('crew-battle');
+    } }, icon('mic', 20), 'Start the battle'),
+    el('button', { class: 'btn', onClick: async () => {
+      if (await ask('Clear all crews and players?', { ok: 'Clear', danger: true })) {
+        game.crew = newCrewState();
+        go('crew-setup', { replace: true });
+      }
+    } }, 'Reset')));
   return root;
 }
 
-function validate(s) {
-  for (const t of s.teams) {
-    if (!t.name.trim()) return `Give every team a name.`;
-    if (t.players.length === 0) return `${t.name} has no players.`;
-    for (const p of t.players) {
-      if (!p.name.trim()) return `${t.name}: every player needs a name.`;
-      const a = parseInt(p.age, 10);
-      if (!Number.isFinite(a) || a < 1) return `${t.name}: every player needs an age (so we can pick who starts).`;
-    }
-  }
-  // For balanced one-on-ones, the two battling teams should have the same
-  // count — but we'll just round down to the smaller count when battling,
-  // so this is a soft warning only.
-  return true;
-}
-
-function startBattle(s) {
-  // Sort teams by combined age descending; that gives us "first to mic".
-  const sums = s.teams.map((t, i) => ({
-    i, sum: t.players.reduce((a, p) => a + (parseInt(p.age, 10) || 0), 0),
-  }));
-  sums.sort((a, b) => b.sum - a.sum);
-  const startIdx = sums[0].i;
-
-  // Three-team rotation: each round, one team battles the team to their
-  // RIGHT, with the team to their LEFT judging. Rotate clockwise.
-  // Rounds:
-  //   Round 1: start vs (start+1) mod 3, judge = (start-1) mod 3
-  //   Round 2: (start+1) vs (start+2), judge = start
-  //   Round 3: (start+2) vs start,     judge = (start+1)
-  s.rotation = [];
-  for (let k = 0; k < 3; k++) {
-    const left = (startIdx + k) % 3;
-    const right = (startIdx + k + 1) % 3;
-    const judge = (startIdx + k - 1 + 3) % 3;
-    s.rotation.push({ leftIdx: left, rightIdx: right, judgeIdx: judge });
-  }
-  s.roundIndex = 0;
-  s.pairIndex = 0;
-  s.started = true;
-  s.cards = { left: null, right: null };
-  s.revealed = { left: false, right: false };
-  s.timer = null;
-}
-
-// ====== BATTLE SCREEN ======
-export function renderCrewBattle({ go }) {
-  if (!game.crew?.started) { go('crew-setup', { replace: true }); return el('div'); }
-  const s = game.crew;
-
-  const round = s.rotation[s.roundIndex];
-  const left = s.teams[round.leftIdx];
-  const right = s.teams[round.rightIdx];
-  const judge = s.teams[round.judgeIdx];
-  const pairCount = Math.min(left.players.length, right.players.length);
-  const lp = left.players[s.pairIndex % left.players.length];
-  const rp = right.players[s.pairIndex % right.players.length];
-
-  const root = el('section', { class: 'battle' });
-
-  // Header: round + score
-  const header = el('div', { class: 'battle-header' },
-    sideCard(left,  s.pairIndex, 'left',  `Round ${s.roundIndex + 1} · battler`),
-    el('div', { class: 'battle-vs' }, 'VS'),
-    sideCard(right, s.pairIndex, 'right', `Round ${s.roundIndex + 1} · battler`),
-  );
-  root.appendChild(header);
-
-  // Judges banner
-  const judges = el('div', { class: 'judges-banner' },
-    el('span', { class: 'label' }, 'Judges'),
-    el('strong', { style: { color: judge.color } }, judge.name),
-    el('span', { class: 'note' }, `(team to ${left.name}'s left)`),
-  );
-  root.appendChild(judges);
-
-  // Stage with the matchup + cards + actions
-  const stage = el('div', { class: 'stage' });
-
-  const matchup = el('div', { class: 'matchup' },
-    el('div', { class: 'who', style: { color: left.color, textAlign: 'right' } }, lp.name),
-    el('div', { class: 'vs' }, 'vs'),
-    el('div', { class: 'who', style: { color: right.color } }, rp.name),
-  );
-  stage.appendChild(matchup);
-
-  // Cards: each player gets a hand of [prompt, rhyme]
-  const cards = el('div', { class: 'cards' });
-
-  const leftHand = ensureHand(s, 'left');
-  const rightHand = ensureHand(s, 'right');
-
-  cards.appendChild(handBlock(leftHand, lp.name, left.color, 'left', () => window.MicDrop.go('crew-battle', { replace: true })));
-  cards.appendChild(handBlock(rightHand, rp.name, right.color, 'right', () => window.MicDrop.go('crew-battle', { replace: true })));
-
-  stage.appendChild(cards);
-
-  // Timer + actions
-  const timerWrap = el('div');
-  timerWrap.appendChild(buildTimer(s, () => window.MicDrop.go('crew-battle', { replace: true })));
-  stage.appendChild(timerWrap);
-
-  const actions = el('div', { class: 'stage-actions' });
-
-  // Score strip
-  const score = el('div', { class: 'score-strip' });
-  s.teams.forEach((t) => {
-    const pip = el('span', { class: 'pip' + (t.score > 0 ? ' win' : ''), style: { borderColor: t.color } },
-      `${t.name}: ${t.score}`);
-    score.appendChild(pip);
-  });
-  actions.appendChild(score);
-
-  const verdict = el('div', { class: 'verdict-actions' });
-  verdict.appendChild(el('button', { class: 'primarybtn', onClick: () => awardWin(s, round.leftIdx, () => window.MicDrop.go('crew-battle', { replace: true })) },
-    `${left.name} wins this bar`));
-  verdict.appendChild(el('button', { class: 'primarybtn violet', onClick: () => awardWin(s, round.rightIdx, () => window.MicDrop.go('crew-battle', { replace: true })) },
-    `${right.name} wins this bar`));
-  actions.appendChild(verdict);
-
-  stage.appendChild(actions);
-  root.appendChild(stage);
-
-  // Round nav
-  const nav = el('div', { class: 'btnrow' },
-    el('button', { class: 'ghostbtn', onClick: () => { game.crew = null; window.MicDrop.go('crew-setup'); } }, 'Edit teams'),
-    el('button', { class: 'ghostbtn', onClick: () => { if (confirm('Quit this battle?')) { game.crew = null; window.MicDrop.go('home'); } } }, 'Quit'),
-  );
-  root.appendChild(nav);
-
-  return root;
-}
-
-function sideCard(team, pairIdx, side, sub) {
-  const card = el('div', { class: `battle-side ${side}`, style: { borderColor: team.color } });
-  card.appendChild(el('div', { class: 'sub' }, sub));
-  card.appendChild(el('h3', { style: { color: team.color } }, team.name));
-  const ros = el('ol', { class: 'roster' });
-  team.players.forEach((p, i) => {
-    ros.appendChild(el('li', { class: i === pairIdx ? 'current' : '' }, p.name || `Player ${i + 1}`));
-  });
-  card.appendChild(ros);
+function teamCard(team) {
+  const card = el('article', { class: `team-card ${team.color}` });
+  card.appendChild(el('div', { class: 'plate' },
+    el('input', {
+      class: 'plate-input', value: team.name, maxlength: 22, 'aria-label': 'Crew name',
+      onInput: (e) => { team.name = e.target.value; },
+    })));
+  const list = el('div', { class: 'players' });
+  const meta = el('p', { class: 'fine' });
+  const updateMeta = () => {
+    const ages = team.players.map((p) => parseInt(p.age, 10)).filter((a) => a > 0);
+    meta.textContent = `${team.players.length} rapper${team.players.length === 1 ? '' : 's'}` +
+      (ages.length ? ` · combined age ${ages.reduce((a, b) => a + b, 0)}` : '');
+  };
+  const draw = () => {
+    clear(list);
+    team.players.forEach((p, i) => {
+      list.appendChild(el('div', { class: 'player-row' },
+        el('input', {
+          class: 'input', placeholder: `Rapper ${i + 1}`, value: p.name, maxlength: 22, 'aria-label': `Rapper ${i + 1} name`,
+          onInput: (e) => { p.name = e.target.value; },
+        }),
+        el('input', {
+          class: 'input age', placeholder: 'Age', type: 'number', min: 1, max: 120, value: p.age, inputmode: 'numeric',
+          'aria-label': `Rapper ${i + 1} age (optional)`,
+          onInput: (e) => { p.age = e.target.value; updateMeta(); },
+        }),
+        el('button', {
+          class: 'btn icon', 'aria-label': `Remove rapper ${i + 1}`, disabled: team.players.length <= 1,
+          onClick: () => { team.players.splice(i, 1); draw(); },
+        }, icon('close', 16))));
+    });
+    updateMeta();
+  };
+  draw();
+  card.append(list,
+    el('button', { class: 'btn small', onClick: () => { team.players.push({ name: '', age: '' }); draw(); list.lastChild?.querySelector('input')?.focus(); } },
+      icon('plus', 14), 'Add rapper'),
+    meta);
   return card;
 }
 
-function ensureHand(s, side) {
-  if (!s.cards[side]) s.cards[side] = drawHandCrew();
-  return s.cards[side];
-}
-
-function handBlock(hand, who, color, side, rerender) {
-  const wrap = el('div', { class: 'card-hand' });
-  wrap.appendChild(el('div', { class: 'section-title', style: { color } }, who));
-  const stack = el('div', { class: 'cards', style: { gridTemplateColumns: '1fr 1fr' } });
-  hand.forEach((c, i) => stack.appendChild(cardElement(c, side, i, rerender)));
-  wrap.appendChild(stack);
-  return wrap;
-}
-
-function cardElement(card, side, slot, rerender) {
-  const key = `${side}-${slot}`;
-  const wrapper = el('div', { class: 'card-slot' });
-  const known = card.__revealed;
-  if (!known) {
-    const back = el('button', { class: 'card face-down', onClick: () => {
-      card.__revealed = true;
-      sfxIfOn('flip');
-      rerender();
-    } }, el('div', { class: 'kind' }, card.kind === 'rhyme' ? 'Rhyme' : 'Prompt'),
-      el('div', { class: 'body' }, 'Tap to draw'));
-    wrapper.appendChild(back);
-  } else {
-    wrapper.appendChild(faceUp(card));
+function validate(s) {
+  for (const t of active(s)) {
+    if (!t.name.trim()) return 'Every crew needs a name.';
+    if (!t.players.length) return `${t.name} needs at least one rapper.`;
   }
-  return wrapper;
+  return null;
 }
 
-function faceUp(card) {
-  if (card.kind === 'rhyme') {
-    const wrap = el('div', { class: 'card rhyme' });
-    wrap.appendChild(el('div', { class: 'corner' }, 'Rhyme'));
-    wrap.appendChild(el('div', { class: 'kind' }, 'Land a rhyme on'));
-    wrap.appendChild(el('div', { class: 'body' }, card.anchor));
-    if (settings.get('showRhymeHint')) {
-      const list = el('div', { class: 'rhyme-list' });
-      card.words.slice(0, 6).forEach((w) => list.appendChild(el('span', { class: 'word' }, w)));
-      wrap.appendChild(list);
-    }
-    return wrap;
-  }
-  const cls = card.kind === 'burn' ? 'burn' : 'boast';
-  const wrap = el('div', { class: `card ${cls}` });
-  wrap.appendChild(el('div', { class: 'corner' }, card.kind === 'burn' ? 'Burn' : 'Boast'));
-  wrap.appendChild(el('div', { class: 'kind' }, card.kind === 'burn' ? 'Roast prompt' : 'Hype prompt'));
-  wrap.appendChild(el('div', { class: 'body' }, card.text));
-  return wrap;
+function startBattle(s) {
+  const teams = active(s);
+  teams.forEach((t, ti) => {
+    t.name = t.name.trim();
+    t.score = 0; t.drops = 0;
+    t.players.forEach((p, i) => { p.name = p.name.trim() || `${t.name.split(' ')[0]} ${i + 1}`; });
+    t.index = ti;
+  });
+  const sums = teams.map((t) => t.players.reduce((a, p) => a + (parseInt(p.age, 10) || 0), 0));
+  const start = Math.max(...sums) > 0 ? sums.indexOf(Math.max(...sums)) : shuffle(teams.map((_, i) => i))[0];
+  // Each round, a crew battles the crew to its right and the crew to its left judges.
+  s.rotation = s.count === 3
+    ? [0, 1, 2].map((k) => ({ left: (start + k) % 3, right: (start + k + 1) % 3, judge: (start + k + 2) % 3 }))
+    : [{ left: start, right: 1 - start, judge: null }];
+  Object.assign(s, { started: true, roundIndex: 0, pairIndex: 0, bout: null, hands: null, sudden: false, mvp: {} });
 }
 
-function buildTimer(s, rerender) {
-  const total = settings.get('roundSeconds');
-  if (!s.timer) s.timer = { remaining: total, running: false, started: false };
-  const t = s.timer;
+const pairsIn = (s, round) => (s.sudden ? 1
+  : Math.max(s.teams[round.left].players.length, s.teams[round.right].players.length));
 
-  const display = el('div', { class: 'timer' }, formatTime(t.remaining));
-  if (t.remaining <= 10) display.classList.add('warn');
-  if (t.remaining <= 0)  display.classList.add('zero');
+// ====== BATTLE ======
+export function renderCrewBattle({ go }) {
+  const s = game.crew;
+  if (!s?.started) { go('crew-setup', { replace: true }); return el('div'); }
+  if (s.roundIndex >= s.rotation.length) { go('crew-results', { replace: true }); return el('div'); }
+  stagefx.base(0.35);
 
-  const row = el('div', { class: 'timer-row' });
-  row.appendChild(el('button', { class: 'btn', onClick: () => {
-    if (t.remaining <= 0) t.remaining = total;
-    t.running = !t.running;
-    if (t.running) startCountdown(s, display, rerender);
-  } }, t.running ? 'Pause' : (t.started ? 'Resume' : 'Start timer')));
-  row.appendChild(el('button', { class: 'btn', onClick: () => {
-    t.running = false; t.remaining = total; t.started = false; rerender();
-  } }, 'Reset'));
-
-  return el('div', {}, display, row);
-}
-
-let _interval = null;
-function startCountdown(s, _display, rerender) {
-  if (_interval) clearInterval(_interval);
-  s.timer.started = true;
-  _interval = setInterval(() => {
-    if (!s.timer || !s.timer.running) { clearInterval(_interval); _interval = null; return; }
-    // Query the live timer element each tick — rerenders orphan stale refs.
-    const live = document.querySelector('.timer');
-    if (!live) { clearInterval(_interval); _interval = null; s.timer.running = false; return; }
-    s.timer.remaining = Math.max(0, s.timer.remaining - 1);
-    if (live) {
-      live.textContent = formatTime(s.timer.remaining);
-      live.classList.toggle('warn', s.timer.remaining <= 10 && s.timer.remaining > 0);
-      live.classList.toggle('zero', s.timer.remaining <= 0);
-    }
-    if (s.timer.remaining <= 5 && s.timer.remaining > 0) sfxIfOn('tick');
-    if (s.timer.remaining === 0) {
-      s.timer.running = false;
-      sfxIfOn('horn');
-      clearInterval(_interval); _interval = null;
-      rerender();
-    }
-  }, 1000);
-}
-
-function formatTime(sec) {
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
-}
-
-function sfxIfOn(kind) {
-  if (!settings.get('sfxOn')) return;
-  sfx(kind, { volume: settings.get('sfxVolume') });
-}
-
-function awardWin(s, teamIdx, rerender) {
-  s.teams[teamIdx].score += 1;
-  sfxIfOn('win');
-  // Advance to next pair, or next round.
   const round = s.rotation[s.roundIndex];
-  const left = s.teams[round.leftIdx];
-  const right = s.teams[round.rightIdx];
-  const pairCount = Math.min(left.players.length, right.players.length);
-
-  s.cards = { left: null, right: null };
-  s.timer = null;
-  s.pairIndex += 1;
-
-  if (s.pairIndex >= pairCount) {
-    s.pairIndex = 0;
-    s.roundIndex += 1;
-    if (s.roundIndex >= s.rotation.length) {
-      // game over
-      showFinal(s);
-      return;
-    }
+  const L = s.teams[round.left], R = s.teams[round.right];
+  const J = round.judge != null ? s.teams[round.judge] : null;
+  const pairs = pairsIn(s, round);
+  const lp = L.players[s.pairIndex % L.players.length];
+  const rp = R.players[s.pairIndex % R.players.length];
+  if (!s.bout) {
+    s.bout = newBout(settings.get('twists') ? maybeTwist() : null);
+    s.hands = [drawHandCrew(), drawHandCrew()];
   }
-  rerender();
+
+  const root = el('section', { class: 'battle' });
+  root.appendChild(scoreboard(s, round));
+  root.appendChild(renderBout({
+    bout: s.bout,
+    corners: [
+      { name: lp.name, color: L.color, tag: L.name, hand: s.hands[0] },
+      { name: rp.name, color: R.color, tag: R.name, hand: s.hands[1] },
+    ],
+    order: [0, 1],
+    head: {
+      kicker: s.sudden ? 'Sudden death' : `Round ${s.roundIndex + 1} of ${s.rotation.length}`,
+      title: `${L.name} vs ${R.name} · bout ${s.pairIndex + 1} of ${pairs}`,
+    },
+    judges: J ? { label: 'Judging', name: J.name, color: J.color } : { label: 'Judging', name: 'The whole room' },
+    onDecide: (idx, drop) => award(s, idx === 0 ? round.left : round.right, idx === 0 ? lp : rp, drop, go),
+    rerender: () => go('crew-battle', { replace: true }),
+  }));
+  root.appendChild(el('div', { class: 'btnrow' },
+    el('button', { class: 'btn small', onClick: async () => {
+      if (await ask('Go back and edit the crews? Scores reset.', { ok: 'Edit crews' })) { s.started = false; go('crew-setup'); }
+    } }, 'Edit crews'),
+    el('button', { class: 'btn small', onClick: async () => {
+      if (await ask('End this battle?', { ok: 'End it', danger: true })) { game.crew = null; go('home'); }
+    } }, 'Quit')));
+  return root;
 }
 
-function showFinal(s) {
-  const winner = s.teams.slice().sort((a, b) => b.score - a.score)[0];
-  setTimeout(() => {
-    alert(`Battle done. ${winner.name} take it with ${winner.score} bars.`);
-    game.crew = null;
-    window.MicDrop.go('home');
-  }, 100);
+function scoreboard(s, round) {
+  return el('div', { class: 'scoreboard', 'aria-label': 'Score' },
+    ...active(s).map((t, i) => el('div', {
+      class: `score ${t.color}${i === round.judge ? ' judging' : ''}`,
+    },
+    el('span', { class: 'score-name' }, t.name),
+    el('span', { class: 'score-pts' }, String(t.score)),
+    el('span', { class: 'score-role' }, i === round.judge ? 'Judging' : 'Battling'))));
+}
+
+function award(s, teamIdx, player, drop, go) {
+  const t = s.teams[teamIdx];
+  t.score += drop ? 2 : 1;
+  if (drop) t.drops += 1;
+  const key = `${teamIdx}|${player.name}`;
+  s.mvp[key] = (s.mvp[key] || 0) + (drop ? 2 : 1);
+
+  s.bout = null; s.hands = null;
+  const pairs = pairsIn(s, s.rotation[s.roundIndex]);
+  s.pairIndex += 1;
+  if (s.pairIndex >= pairs) { s.pairIndex = 0; s.roundIndex += 1; }
+  if (s.roundIndex >= s.rotation.length) { go('crew-results'); return; }
+  go('crew-battle', { replace: true });
+}
+
+// ====== RESULTS ======
+export function renderCrewResults({ go }) {
+  const s = game.crew;
+  if (!s?.started) { go('home', { replace: true }); return el('div'); }
+  const ranked = active(s).map((t, i) => ({ ...t, i })).sort((a, b) => b.score - a.score || b.drops - a.drops);
+  const top = ranked[0];
+  const tied = ranked.filter((t) => t.score === top.score && t.drops === top.drops);
+  const [mvpKey, mvpPts] = Object.entries(s.mvp || {}).sort((a, b) => b[1] - a[1])[0] || [];
+  const mvp = mvpKey ? { name: mvpKey.split('|')[1], team: s.teams[+mvpKey.split('|')[0]].name } : null;
+  stagefx.base(0.5);
+  stagefx.flare(3000);
+  sfx('applause');
+
+  const rows = ranked.map((t) => ({ name: t.name, color: t.color, value: `${t.score} pt${t.score === 1 ? '' : 's'}${t.drops ? ` · ${t.drops} drop${t.drops === 1 ? '' : 's'}` : ''}` }));
+  const again = () => { startBattle(s); go('crew-battle'); };
+
+  if (tied.length > 1) {
+    return renderPodium({
+      kicker: 'Dead even',
+      champ: { name: 'It’s a tie', color: 'gold', line: `${tied.map((t) => t.name).join(' and ')} are level. Settle it with one bout.` },
+      title: 'Standings', rows,
+      actions: [
+        { label: 'Sudden death', cls: 'ink big', onClick: () => {
+          const third = active(s).findIndex((_, i) => i !== tied[0].i && i !== tied[1].i);
+          s.rotation = [{ left: tied[0].i, right: tied[1].i, judge: third >= 0 ? third : null }];
+          Object.assign(s, { roundIndex: 0, pairIndex: 0, sudden: true, bout: null, hands: null });
+          go('crew-battle');
+        } },
+        { label: 'Call it a draw', onClick: () => { game.crew = null; go('home'); } },
+      ],
+    });
+  }
+
+  return renderPodium({
+    kicker: 'Champions',
+    champ: { name: top.name, color: top.color, line: `${top.players.map((p) => p.name).join(' · ')}` },
+    title: 'Final standings', rows,
+    note: mvp ? `MVP: ${mvp.name} (${mvp.team}), ${mvpPts} point${mvpPts === 1 ? '' : 's'}.` : null,
+    actions: [
+      { label: 'Run it back', cls: 'ink big', onClick: again },
+      { label: 'New crews', onClick: () => { s.started = false; go('crew-setup'); } },
+      { label: 'Home', onClick: () => { game.crew = null; go('home'); } },
+    ],
+  });
 }
