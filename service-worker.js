@@ -2,7 +2,7 @@
 // Music files are NOT precached — they're network/range-fetched and the
 // browser can decide what to keep.
 
-const CACHE = 'micdrop-v2';
+const CACHE = 'micdrop-v3';
 const SHELL = [
   './',
   './index.html',
@@ -14,6 +14,7 @@ const SHELL = [
   './js/teamBattle.js',
   './js/kingOfHill.js',
   './js/music.js',
+  './js/mixer.js',
   './js/settings.js',
   './data/burns.json',
   './data/boasts.json',

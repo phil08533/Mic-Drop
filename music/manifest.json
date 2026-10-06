@@ -1,5 +1,5 @@
 {
-  "$schema": "List the audio files inside each genre folder. Paths are relative to /music/.",
+  "$schema": "Each track: file, title, artist, bpm, bars. bpm+bars (first downbeat at 0:00) enable beat-matched mixing. Paths are relative to /music/<genre>/.",
   "genres": [
     {
       "id": "lofi",
@@ -8,12 +8,23 @@
         {
           "file": "rainy-window.mp3",
           "title": "Rainy Window",
-          "artist": "Mic Drop House Band"
+          "artist": "Mic Drop House Band",
+          "bpm": 76,
+          "bars": 32
         },
         {
           "file": "late-night-cypher.mp3",
           "title": "Late Night Cypher",
-          "artist": "Mic Drop House Band"
+          "artist": "Mic Drop House Band",
+          "bpm": 82,
+          "bars": 32
+        },
+        {
+          "file": "slow-burn.mp3",
+          "title": "Slow Burn",
+          "artist": "Mic Drop House Band",
+          "bpm": 86,
+          "bars": 32
         }
       ]
     },
@@ -24,12 +35,23 @@
         {
           "file": "basement-tapes.mp3",
           "title": "Basement Tapes",
-          "artist": "Mic Drop House Band"
+          "artist": "Mic Drop House Band",
+          "bpm": 88,
+          "bars": 32
         },
         {
           "file": "concrete-jungle.mp3",
           "title": "Concrete Jungle",
-          "artist": "Mic Drop House Band"
+          "artist": "Mic Drop House Band",
+          "bpm": 92,
+          "bars": 32
+        },
+        {
+          "file": "corner-store.mp3",
+          "title": "Corner Store",
+          "artist": "Mic Drop House Band",
+          "bpm": 95,
+          "bars": 32
         }
       ]
     },
@@ -40,28 +62,50 @@
         {
           "file": "smoke-signals.mp3",
           "title": "Smoke Signals",
-          "artist": "Mic Drop House Band"
+          "artist": "Mic Drop House Band",
+          "bpm": 134,
+          "bars": 32
         },
         {
           "file": "cold-chain.mp3",
           "title": "Cold Chain",
-          "artist": "Mic Drop House Band"
+          "artist": "Mic Drop House Band",
+          "bpm": 140,
+          "bars": 32
+        },
+        {
+          "file": "night-shift.mp3",
+          "title": "Night Shift",
+          "artist": "Mic Drop House Band",
+          "bpm": 146,
+          "bars": 32
         }
       ]
     },
     {
-      "id": "electronic",
-      "name": "Electronic",
+      "id": "hype",
+      "name": "Hype",
       "tracks": [
         {
-          "file": "neon-booth.mp3",
-          "title": "Neon Booth",
-          "artist": "Mic Drop House Band"
+          "file": "block-party.mp3",
+          "title": "Block Party",
+          "artist": "Mic Drop House Band",
+          "bpm": 100,
+          "bars": 32
         },
         {
-          "file": "overclock.mp3",
-          "title": "Overclock",
-          "artist": "Mic Drop House Band"
+          "file": "victory-lap.mp3",
+          "title": "Victory Lap",
+          "artist": "Mic Drop House Band",
+          "bpm": 104,
+          "bars": 32
+        },
+        {
+          "file": "spotlight.mp3",
+          "title": "Spotlight",
+          "artist": "Mic Drop House Band",
+          "bpm": 108,
+          "bars": 32
         }
       ]
     }

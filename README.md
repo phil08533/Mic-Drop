@@ -67,7 +67,8 @@ js/
   cards.js              Card deck loader + draw logic
   teamBattle.js         Crew Battle screens + flow
   kingOfHill.js         Solo mode screens + flow
-  music.js              Music player
+  music.js              Music drawer UI (decks, crossfader)
+  mixer.js              Web Audio two-deck beat-matching engine
   settings.js           Settings panel
 data/
   burns.json            Burn prompts
@@ -92,7 +93,20 @@ service-worker.js       Offline cache
 - [x] Polished hand-styled UI (no generic gradient look)
 - [x] App icon + favicon
 - [x] Flame backdrop + flame mic art (`assets/flame*.svg`, regenerate with `tools/make_flames.py`)
-- [x] Starter beats, 2 per genre (original, synthesised by `tools/make_beats.py`)
+- [x] 12 original beats at rap tempos (Lo-Fi 76-86, Boom Bap 88-95, Trap 134-146, Hype 100-108), synthesised by `tools/make_beats.py`
+- [x] Two-deck beat mixer: tempo-locked blends, manual crossfader, CUE, auto-mix (`js/mixer.js`)
 - [ ] Optional: swap in or add more produced tracks in `music/<genre>/` and list them in `music/manifest.json`
 - [ ] Take screenshots and write itch.io page copy
 - [ ] Optional: more burn / boast / rhyme cards (community-add friendly)
+
+## Adding your own beats
+
+Drop files in `music/<genre>/` and list them in `music/manifest.json`. For beat-matched mixing give each
+track `bpm` and `bars`, and make sure the first downbeat is at 0:00 and the file is a whole number of bars
+(so it loops cleanly):
+
+```json
+{ "file": "my-beat.mp3", "title": "My Beat", "artist": "Me", "bpm": 92, "bars": 32 }
+```
+
+Tracks without `bpm` still play and blend, just without tempo-locking.

@@ -768,3 +768,41 @@ html[data-reduce-motion] .embers { display: none; }
 @keyframes mic-bob { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-6px) rotate(2deg); } }
 html[data-reduce-motion] .flame-mic { animation: none; }
 @media (max-width: 640px) { .flame-mic { width: 84px; } }
+
+/* ============ MIXER ============ */
+.mp .decks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mp .deck {
+  background: var(--ink-3); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 10px 12px; display: grid; gap: 6px; min-width: 0;
+  transition: border-color .2s, box-shadow .2s;
+}
+.mp .deck.live  { border-color: var(--hot); box-shadow: 0 0 0 1px var(--hot), 0 0 22px rgba(255,77,46,.25); }
+.mp .deck.cued  { border-color: var(--hot-2); border-style: dashed; }
+.mp .deck-id { font-family: "Space Mono", monospace; font-size: 10px; letter-spacing: .18em; color: var(--muted); }
+.mp .deck .title { font-family: "Bungee", sans-serif; font-size: 13px; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mp .deck .meta  { font-family: "Space Mono", monospace; font-size: 10px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; }
+.mp .progress { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.mp .progress-fill { height: 100%; width: 0; background: var(--hot); }
+.mp .beats { display: flex; gap: 5px; }
+.mp .beat { width: 100%; height: 6px; border-radius: 3px; background: var(--line); display: block; }
+.mp .beat.on { background: var(--hot-2); }
+.mp .beat.on.down { background: var(--hot); }
+.mp .xf { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.mp .xf-end { font-family: "Bungee", sans-serif; font-size: 14px; color: var(--muted); }
+.mp .xfader { width: 100%; height: 34px; accent-color: var(--hot); }
+.mp .xf-state { margin-top: -8px; text-align: center; font-family: "Space Mono", monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.mp .pill {
+  font-family: "Space Mono", monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+  padding: 0 14px; border-radius: 999px; background: var(--ink-3); color: var(--cream);
+  border: 1px solid var(--line); cursor: pointer; height: 38px; white-space: nowrap;
+}
+.mp .pill.on { background: var(--mint); color: #06241b; border-color: var(--mint); }
+.mp .controls .select { width: auto; padding: 8px 10px; }
+.mp .tracklist li { align-items: center; }
+.mp .tracklist li .tname { flex: 1; min-width: 0; }
+.mp .tracklist li.queued { color: var(--hot-2); }
+.mp .tracklist .cue {
+  font-family: "Space Mono", monospace; font-size: 10px; letter-spacing: .1em;
+  background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px; cursor: pointer;
+}
+.mp .tracklist .cue:hover { border-color: var(--hot-2); color: var(--hot-2); }
