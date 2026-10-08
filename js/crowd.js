@@ -45,7 +45,7 @@ export function crowdVote(sides) {
       meters[i].val.textContent = Math.round(score);
     };
 
-    function view(...nodes) { body.replaceChildren(...nodes); }
+    function view(...nodes) { while (body.firstChild) body.firstChild.remove(); body.append(...nodes); }
 
     function intro() {
       view(

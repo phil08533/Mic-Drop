@@ -38,7 +38,7 @@ const stack = [];
 export function go(name, opts = {}) {
   const render = screens[name];
   if (!render) { console.warn('Unknown screen', name); return; }
-  if (!opts.replace && stack.at(-1) !== name) stack.push(name);
+  if (!opts.replace && stack[stack.length - 1] !== name) stack.push(name);
   if (opts.replace && stack.length) stack[stack.length - 1] = name;
   const changed = app.dataset.screen !== name;
   app.dataset.screen = name;
@@ -54,7 +54,7 @@ export function go(name, opts = {}) {
 function backTo() {
   if (stack.length > 1) {
     stack.pop();
-    go(stack.at(-1), { replace: true });
+    go(stack[stack.length - 1], { replace: true });
   } else {
     go('home', { replace: true });
   }

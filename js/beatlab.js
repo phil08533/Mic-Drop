@@ -10,6 +10,8 @@ import {
 } from './synth.js';
 import { listBeats, saveBeat, deleteBeat, renderBeat, toWav, encodeBeat, beatTracks } from './beatstore.js';
 
+const clone = (o) => JSON.parse(JSON.stringify(o));   // structuredClone is too new for older phones
+
 const DRAFT_KEY = 'micdrop:lab:draft';
 
 let pattern = loadDraft() || presetPattern('boombap');
@@ -378,7 +380,7 @@ function refreshSaved() {
       el('span', { class: 'saved-actions' },
         el('button', { class: 'btn small', onClick: () => {
           stop();
-          pattern = structuredClone(b.pattern);
+          pattern = clone(b.pattern);
           changed();
           rebuild();
           toast(`Loaded “${b.name}”.`);

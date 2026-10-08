@@ -1,6 +1,9 @@
+
 // Drum machine voices and the step player. Works with a live AudioContext (the
 // Beat Lab) and with an OfflineAudioContext (rendering a beat for the Beats
 // player or a WAV download), so a saved beat sounds the same everywhere.
+
+const clone = (o) => JSON.parse(JSON.stringify(o));   // structuredClone is too new for older phones
 
 export const ROWS = [
   { id: 'kick', name: 'Kick' },
@@ -64,8 +67,8 @@ export function presetPattern(id) {
   const src = PRESETS[id];
   if (!src) return p;
   const { rows, ...rest } = src;
-  Object.assign(p, structuredClone(rest));
-  p.rows = structuredClone(rows);
+  Object.assign(p, clone(rest));
+  p.rows = clone(rows);
   p.name = '';
   return p;
 }
