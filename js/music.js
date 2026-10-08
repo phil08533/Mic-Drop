@@ -282,7 +282,7 @@ function paint() {
   refs.xfLabel.textContent = mixer.fade ? 'Mixing…'
     : mixer.live == null ? 'Pick a beat to start'
       : decks[1 - mixer.live].buffer ? 'Cued: slide the crossfader to blend'
-        : mixer.auto ? 'Auto-mix is on' : 'Auto-mix is off';
+        : mixer.auto ? (mixer.hold ? 'Auto-mix waits: someone’s rapping' : 'Auto-mix is on') : 'Looping this beat';
 
   // tempo slider tracks the live deck, ±8% around its native BPM
   if (live && live.bpm && document.activeElement !== refs.tempo) {

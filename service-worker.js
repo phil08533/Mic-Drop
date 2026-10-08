@@ -2,7 +2,7 @@
 // Music files and the visualizer library are NOT precached; they're cached
 // the first time they're used.
 
-const CACHE = 'micdrop-v5';
+const CACHE = 'micdrop-v6';
 const SHELL = [
   './',
   './index.html',
@@ -27,8 +27,7 @@ const SHELL = [
   './js/visualizer.js',
   './js/settings.js',
   './js/guide.js',
-  './data/burns.json',
-  './data/boasts.json',
+  './js/install.js',
   './data/rhymes.json',
   './data/twists.json',
   './music/manifest.json',

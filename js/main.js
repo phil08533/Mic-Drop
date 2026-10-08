@@ -12,6 +12,7 @@ import { renderBeatLab, openPattern } from './beatlab.js';
 import { decodeBeat } from './beatstore.js';
 import { openVisualizer } from './visualizer.js';
 import { openGuide, firstTimeGuide } from './guide.js';
+import { install, refreshInstall } from './install.js';
 import { onMixerChange, nowPlaying, isPlaying, mixer } from './mixer.js';
 import { stagefx } from './stagefx.js';
 
@@ -47,6 +48,7 @@ export function go(name, opts = {}) {
   if (node instanceof Node) screen.appendChild(node);
   if (changed) window.scrollTo(0, 0);
   if (!opts.replace) firstTimeGuide(name);
+  refreshInstall();
 }
 
 function backTo() {
@@ -63,6 +65,7 @@ const ACTIONS = {
   home() { stack.length = 0; game.reset(); go('home'); },
   how() { go('how'); },
   help() { openGuide(app.dataset.screen); },
+  install() { install(); },
   'start-crew'() { game.mode = 'crew'; go(game.crew?.started ? 'crew-battle' : 'crew-setup'); },
   'start-koth'() { game.mode = 'koth'; go(game.koth?.started ? 'koth-battle' : 'koth-setup'); },
   'beat-lab'() { go('beat-lab'); },

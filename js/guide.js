@@ -9,13 +9,13 @@ const SEEN_KEY = 'micdrop:guide:v1';
 
 const STEPS = [
   ['crown', 'Pick a mode', 'King of the Hill: everyone in one line, the winner stays on. Crew Battle: teams go head to head.'],
-  ['cards', 'Flip your cards', 'You get a topic to rap about and a word you have to rhyme.'],
+  ['cards', 'Flip your cards', 'Burn (roast the other rapper) or Boast (hype yourself), plus a word you have to rhyme. What you say is up to you.'],
   ['bell', 'Ding ding, rap', 'The bell drops the beat and starts the clock. One verse each.'],
   ['mic', 'Pick a winner', 'Tap who won, or let the room cheer it out. Most wins takes the night.'],
 ];
 
 const BOUT_TIPS = [
-  'Tap the striped cards to flip them, then read them out loud.',
+  'Tap the striped cards to flip them: Burn or Boast, and a word to rhyme.',
   'Press Ding ding (or the Space bar) to start the clock. Done skips ahead if someone finishes early.',
   'A bar so good the room explodes? Tap Mic drop twice: instant win, double points.',
   'The soundboard at the bottom has an air horn. You know what to do.',

@@ -6,14 +6,12 @@
 import { shuffle } from './ui.js';
 
 const DATA = {
-  burns: 'data/burns.json',
-  boasts: 'data/boasts.json',
   rhymes: 'data/rhymes.json',
   twists: 'data/twists.json',
 };
 
 let decks = null;
-const pools = { burns: [], boasts: [], rhymes: [], twists: [] };
+const pools = { rhymes: [], twists: [] };
 
 async function loadJson(path) {
   const res = await fetch(path, { cache: 'no-cache' });
@@ -23,15 +21,11 @@ async function loadJson(path) {
 
 export async function loadDecks() {
   if (decks) return decks;
-  const [burns, boasts, rhymes, twists] = await Promise.all([
-    loadJson(DATA.burns),
-    loadJson(DATA.boasts),
+  const [rhymes, twists] = await Promise.all([
     loadJson(DATA.rhymes),
     loadJson(DATA.twists).catch(() => ({ cards: [] })),
   ]);
   decks = {
-    burns: burns.cards.map((text, i) => ({ id: `burn-${i}`, kind: 'burn', text })),
-    boasts: boasts.cards.map((text, i) => ({ id: `boast-${i}`, kind: 'boast', text })),
     rhymes: rhymes.cards.map((c, i) => ({ id: `rhyme-${i}`, kind: 'rhyme', anchor: c.anchor, words: c.words })),
     twists: twists.cards.map((c, i) => ({ id: `twist-${i}`, kind: 'twist', ...(typeof c === 'string' ? { text: c } : c) })),
   };
@@ -50,9 +44,10 @@ function drawFrom(which) {
   return { ...pools[which].pop() };
 }
 
-// A "prompt" card: 50/50 burn or boast.
+// Burn (go at the other rapper) or Boast (hype yourself), 50/50.
+// No topic: the rapper picks what to say.
 export function drawPrompt() {
-  return drawFrom(Math.random() < 0.5 ? 'burns' : 'boasts');
+  return { kind: Math.random() < 0.5 ? 'burn' : 'boast' };
 }
 
 export function drawRhyme() {
