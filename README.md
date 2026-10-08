@@ -12,7 +12,8 @@ A rap battle party game for the web. Draw a card, spit a verse, let the room dec
   open hat, rim, 808 with notes, chords). Save beats to *My Beats* and battle on
   them, download a WAV, or share a link.
 
-Every bout runs the same way: flip cards (Burn/Boast + Rhyme, sometimes a
+Every bout runs the same way: flip cards (Burn or Boast — you pick the topic — plus a
+Rhyme word, sometimes a
 Twist for both), the bell starts the clock and drops a beat, verse, hand-off,
 verse, decision. Judges can tap the winner or use the **crowd meter** (the
 room cheers for each rapper and the mic measures it). A **MIC DROP** during a
@@ -20,8 +21,13 @@ verse ends the bout on the spot for double points. The soundboard has an air
 horn, applause, the bell, a DJ pull-up and next beat.
 
 The Beats player is a two-deck mixer with tempo sync, a crossfader and
-auto-mix, and the **visualizer** shows MilkDrop-style visuals (like the old
+auto-mix (it never changes the beat mid-verse, and short loops repeat until
+they've played at least a minute), and the **visualizer** shows MilkDrop-style visuals (like the old
 media players) for whatever's playing.
+
+New players get a **How to play** button in the top bar: the whole game in four
+steps, plus tips for the screen they're on. It also opens by itself the first
+time someone sets up a game.
 
 Built as a static web app so it can ship to itch.io and be installed from
 Chrome (Add to Home Screen / Install app) for offline play.
@@ -55,6 +61,12 @@ to the manifest. Beats saved in the Beat Lab show up automatically under
 3. Set the viewport to `1280 x 800` (or whatever you prefer — the layout
    is responsive).
 
+## Installing on a phone
+
+The home screen has an **Install app** button (Android/Chrome install prompt;
+on iPhone it explains Share → Add to Home Screen). The layout is built so a
+whole bout fits on one phone screen without scrolling.
+
 ## Installing from Chrome
 
 The app ships a Web App Manifest and service worker. Open the deployed site
@@ -71,7 +83,7 @@ js/
   state.js              Persistent settings + run-time state
   ui.js                 DOM helpers, dialog, toast, stamp
   icons.js              Inline SVG icons
-  cards.js              Card decks (burn / boast / rhyme / twist)
+  cards.js              Cards (burn / boast, rhyme, twist)
   bout.js               One bout: cards, clock, mic drop, decision, soundboard
   crowd.js              Crowd meter (microphone)
   teamBattle.js         Crew Battle setup, rotation, results
@@ -85,7 +97,9 @@ js/
   sfx.js                Synthesised sound effects + soundboard
   fire.js, stagefx.js   Background fire
   settings.js           Settings drawer
-data/                   burns, boasts, rhymes, twists
+  guide.js              How to play guide
+  install.js            Install-app button
+data/                   rhymes, twists
 music/                  Beats (per-genre folders) + manifest.json
 vendor/butterchurn/     Visualizer library + presets (MIT, loaded on demand)
 tools/make_beats.py     Regenerates the bundled beats
@@ -104,7 +118,7 @@ service-worker.js       Offline cache
 ## To do
 
 - [ ] Take screenshots and write itch.io page copy
-- [ ] More burn / boast / rhyme / twist cards
+- [ ] More rhyme / twist cards
 - [ ] Revisit the background fire
 
 ## Adding your own beats

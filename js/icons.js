@@ -28,6 +28,8 @@ const PATHS = {
   fullscreen: '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',
   arrowL: '<path d="M14.5 5.5L8 12l6.5 6.5"/>',
   arrowR: '<path d="M9.5 5.5L16 12l-6.5 6.5"/>',
+  help: '<circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 015.4 1c0 1.9-2.7 2.4-2.7 4.1"/><circle cx="12" cy="17.6" r="1.1" fill="currentColor" stroke="none"/>',
+  cards: '<rect x="4" y="5" width="10" height="15" rx="1.5"/><path d="M14 7.5l5.2 1.3-3.3 13.2-6.4-1.6"/>',
   save: '<path d="M5 4h11.5L20 7.5V20H4V4z"/><path d="M8 4v5h7V4M7.5 20v-6.5h9V20"/>',
 };
 

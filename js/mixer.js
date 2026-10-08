@@ -29,6 +29,8 @@ export const mixer = {
   xfade: 0,          // 0 = deck A only, 1 = deck B only
   fade: null,        // running auto-fade {o, i, t0, t1, x0, x1}
   queue: [],         // tracks auto-mix / "next" draw from
+  hold: false,       // someone is mid-verse: auto-mix keeps the current beat looping
+  minPlay: 60,       // auto-mix lets every beat play at least this many seconds
 };
 
 function mkDeck(id) {
@@ -144,7 +146,7 @@ function makeSource(d, rate) {
 
 function startDeck(d, track, buffer, when, rate, synced) {
   killDeck(d);
-  Object.assign(d, { track, buffer, loopLen: loopLen(track, buffer), startedAt: when, rate, synced, pausedAt: null });
+  Object.assign(d, { track, buffer, loopLen: loopLen(track, buffer), startedAt: when, playedFrom: when, rate, synced, pausedAt: null });
   d.src = makeSource(d, rate);
   d.src.start(when);
 }
@@ -400,12 +402,15 @@ function tick() {
   }
 
   // Auto-mix: line up the next track so the fade ends as the current one loops.
-  if (mixer.auto && !mixer.fade && mixer.live != null) {
+  // Never while someone is rapping, and not before the beat has had its minute:
+  // short beats (like Beat Lab loops) just keep repeating until then.
+  if (mixer.auto && !mixer.hold && !mixer.fade && mixer.live != null) {
     const live = decks[mixer.live];
     const idle = decks[1 - mixer.live];
     if (live.src && !idle.src) {
       const remain = (live.loopLen - position(live)) / live.rate;
-      if (remain <= fadeSeconds(live) + 2.5) {
+      const playedBy = now - (live.playedFrom ?? now) + remain;   // seconds played when this loop ends
+      if (remain <= fadeSeconds(live) + 2.5 && playedBy >= mixer.minPlay) {
         const nxt = pickNext();
         if (nxt) mixTo(nxt, 'end').catch(() => {});
       }

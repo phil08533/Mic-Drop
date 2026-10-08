@@ -206,7 +206,18 @@ function paintCell(row, i) {
 }
 
 function grid() {
-  const wrap = el('div', { class: 'seq panel', role: 'grid', 'aria-label': 'Step sequencer' });
+  const wrap = el('div', { class: 'seq panel page-a', role: 'grid', 'aria-label': 'Step sequencer' });
+  // Phones show half a bar at a time.
+  const pages = el('div', { class: 'seg seq-pages', role: 'radiogroup', 'aria-label': 'Which steps to show' },
+    ...[['a', 'Steps 1–8'], ['b', 'Steps 9–16']].map(([k, label]) => el('button', {
+      class: k === 'a' ? 'on' : '', role: 'radio', 'aria-checked': String(k === 'a'),
+      onClick: (e) => {
+        wrap.classList.toggle('page-a', k === 'a');
+        wrap.classList.toggle('page-b', k === 'b');
+        pages.querySelectorAll('button').forEach((b) => { const on = b === e.currentTarget; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+      },
+    }, label)));
+  wrap.appendChild(pages);
   const ruler = el('div', { class: 'seq-row ruler', 'aria-hidden': 'true' },
     el('div', { class: 'lane' }),
     el('div', { class: 'steps' }, ...Array.from({ length: 16 }, (_, i) => el('span', { class: i % 4 === 0 ? 'downbeat' : '' }, i % 4 === 0 ? String(i / 4 + 1) : '·'))));
@@ -312,9 +323,17 @@ function tools() {
 }
 
 async function downloadWav() {
-  toast('Bouncing 8 bars…', 1500);
+  // About two minutes so there's room for a full verse: render one seamless
+  // 4-bar loop (a full chord cycle) and repeat it.
+  toast('Bouncing a 2-minute loop…', 2000);
   try {
-    const buf = await renderBeat(pattern, { bars: 8, sampleRate: 44100 });
+    const loop = await renderBeat(pattern, { bars: 4, sampleRate: 44100 });
+    const reps = Math.max(2, Math.ceil(120 / loop.duration));
+    const buf = new AudioBuffer({ length: loop.length * reps, numberOfChannels: 2, sampleRate: loop.sampleRate });
+    for (let c = 0; c < 2; c++) {
+      const src = loop.getChannelData(c), dst = buf.getChannelData(c);
+      for (let r = 0; r < reps; r++) dst.set(src, r * loop.length);
+    }
     const url = URL.createObjectURL(toWav(buf));
     const a = el('a', { href: url, download: `${(pattern.name || 'mic-drop-beat').replace(/[^\w-]+/g, '-').toLowerCase()}.wav` });
     document.body.appendChild(a); a.click(); a.remove();

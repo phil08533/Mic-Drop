@@ -79,7 +79,7 @@ function cornerEl(c, side, onMic, waiting) {
 export function cardView(card) {
   const back = el('div', { class: 'card-face card-back' },
     el('span', { class: 'card-back-mark' }, 'Mic', el('br'), 'Drop'),
-    el('span', { class: 'card-back-hint' }, card.kind === 'rhyme' ? 'Rhyme card' : 'Prompt card'),
+    el('span', { class: 'card-back-hint' }, card.kind === 'rhyme' ? 'Rhyme' : 'Burn or boast'),
     el('span', { class: 'card-back-tap' }, 'Tap to flip'));
   let front;
   if (card.kind === 'rhyme') {
@@ -89,13 +89,15 @@ export function cardView(card) {
       el('strong', { class: 'card-word' }, card.anchor),
       settings.get('showRhymeHint') ? el('span', { class: 'card-hints' }, card.words.slice(1, 6).join(' · ')) : null);
   } else {
+    const burn = card.kind === 'burn';
     front = el('div', { class: 'card-face card-front' },
-      el('span', { class: 'card-tag' }, card.kind === 'burn' ? 'Burn' : 'Boast'),
-      el('p', { class: 'card-text' }, card.text));
+      el('span', { class: 'card-tag' }, burn ? 'Burn' : 'Boast'),
+      el('strong', { class: 'card-word' }, burn ? 'Roast them' : 'Hype yourself'),
+      el('span', { class: 'card-cue' }, 'You pick what about.'));
   }
   const btn = el('button', {
     class: `card ${card.kind}${card.__revealed ? ' flipped' : ''}`,
-    'aria-label': card.__revealed ? null : `Flip ${card.kind === 'rhyme' ? 'rhyme' : 'prompt'} card`,
+    'aria-label': card.__revealed ? null : `Flip ${card.kind === 'rhyme' ? 'rhyme' : 'burn or boast'} card`,
   }, el('div', { class: 'card-inner' }, back, front));
   btn.addEventListener('click', () => {
     if (card.__revealed) return;
@@ -173,6 +175,7 @@ function startVerse(o, turn) {
   const { bout } = o;
   const total = bout.twist?.seconds || settings.get('roundSeconds');
   Object.assign(bout, { phase: 'verse', turn });
+  mixer.hold = true;                                         // keep the beat steady under the verse
   bout.clock = { total, left: total, running: true, last: performance.now(), shown: total };
   sfx('bell');
   duck(1);
@@ -194,6 +197,7 @@ function endVerse(o) {
   const { bout } = o;
   if (bout.phase !== 'verse') return;
   bout.clock = null;
+  mixer.hold = false;
   if (bout.turn === 0) bout.phase = 'handoff';
   else { bout.phase = 'decide'; duck(0.35); }
   stagefx.calm();
@@ -225,6 +229,7 @@ function win(o, idx) {
 }
 
 function finish(o, idx, drop) {
+  mixer.hold = false;
   duck(1);
   stagefx.calm();
   live = null;

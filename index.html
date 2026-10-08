@@ -30,7 +30,11 @@
         <span class="np-title"></span>
         <span class="np-bpm"></span>
       </button>
-      <button class="btn small nav-lab" data-action="beat-lab" title="Beat Lab">
+      <button class="btn small nav-help" data-action="help" aria-label="How to play" title="How to play">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 015.4 1c0 1.9-2.7 2.4-2.7 4.1"/><circle cx="12" cy="17.6" r="1.1" fill="currentColor" stroke="none"/></svg>
+        <span>How to play</span>
+      </button>
+      <button class="btn small nav-lab" data-action="beat-lab" aria-label="Beat Lab" title="Beat Lab">
         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM16 10h4v4h-4zM10 16h4v4h-4z" fill="currentColor"/><path d="M10 10h4v4h-4zM4 16h4v4H4zM16 16h4v4h-4z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
         <span>Beat Lab</span>
       </button>
@@ -60,6 +64,10 @@
         <p class="poster-top"><span>Tonight</span><span>Live from your living room</span><span>No cover</span></p>
         <h1 class="wordmark" aria-label="Mic Drop"><span>Mic</span><span>Drop</span></h1>
         <p class="poster-sub">The rap battle party game. Draw a card, spit a verse, let the room decide.</p>
+        <button class="btn big poster-help" data-action="help">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 015.4 1c0 1.9-2.7 2.4-2.7 4.1"/><circle cx="12" cy="17.6" r="1.1" fill="currentColor" stroke="none"/></svg>
+          New here? How to play
+        </button>
       </div>
       <div class="bill">
         <button class="event red" data-action="start-crew">
@@ -86,7 +94,8 @@
       </div>
       <div class="home-foot">
         <div class="btnrow">
-          <button class="btn" data-action="how">How to play</button>
+          <button class="btn ink" data-action="install" hidden>Install app</button>
+          <button class="btn" data-action="how">Full rules</button>
           <button class="btn" data-action="open-music">Beats</button>
           <button class="btn" data-action="open-viz">Visualizer</button>
         </div>
@@ -102,7 +111,7 @@
         <h2 class="screen-title">How a bout <em>works</em></h2>
       </header>
       <ol class="rules">
-        <li><h3>Draw</h3><p>Both rappers flip their cards: a <b>Burn</b> (roast the other rapper) or a <b>Boast</b> (hype yourself), plus a <b>Rhyme</b> word to land. Sometimes a <b>Twist</b> adds a rule for both.</p></li>
+        <li><h3>Draw</h3><p>Both rappers flip their cards: <b>Burn</b> (roast the other rapper) or <b>Boast</b> (hype yourself), plus a <b>Rhyme</b> word to land. What you rap about is up to you. Sometimes a <b>Twist</b> adds a rule for both.</p></li>
         <li><h3>Ding ding</h3><p>The bell starts the clock and drops the beat. The first rapper gets one verse, then the mic goes across for the answer.</p></li>
         <li><h3>Decide</h3><p>The judges pick a winner, or use the <b>Crowd meter</b>: the room cheers for each rapper and the mic hears who got the bigger reaction.</p></li>
         <li><h3>Mic drop</h3><p>Somebody lands a bar so cold the room loses it? Hit <b>Mic drop</b> during their verse. Instant win, double points.</p></li>
