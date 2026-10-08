@@ -1,8 +1,10 @@
-// Mic Drop service worker. App-shell cache for offline play.
-// Music files and the visualizer library are NOT precached; they're cached
-// the first time they're used.
+// Mic Drop service worker: makes the app work offline.
+//
+// Network first: when online you always get the newest files (so an update
+// can never leave you with a mix of old and new code); the cache is only used
+// when the network isn't there. Anything fetched is cached for next time.
 
-const CACHE = 'micdrop-v6';
+const CACHE = 'micdrop-v7';
 const SHELL = [
   './',
   './index.html',
@@ -38,16 +40,18 @@ const SHELL = [
 ];
 
 self.addEventListener('install', (e) => {
+  // cache: 'reload' skips the browser's HTTP cache, so we never store stale copies.
   e.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(SHELL).catch(() => {}))
+    caches.open(CACHE)
+      .then((c) => Promise.all(SHELL.map((u) => fetch(new Request(u, { cache: 'reload' }))
+        .then((r) => (r.ok ? c.put(u, r) : null)).catch(() => {}))))
       .then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -56,23 +60,17 @@ self.addEventListener('fetch', (e) => {
   const { request } = e;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
-  // For audio files we go network-first so the user always gets fresh tracks.
-  const isAudio = /\.(mp3|ogg|m4a|wav|flac)(\?|$)/i.test(url.pathname);
-  if (isAudio) {
-    e.respondWith(fetch(request).catch(() => caches.match(request)));
-    return;
-  }
-  // App shell: cache-first, fall back to network, cache the result.
+  if (url.origin !== location.origin) return;            // fonts etc.: let the browser handle them
   e.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((res) => {
-        if (res && res.ok && url.origin === location.origin) {
+    fetch(request, { cache: 'no-cache' })
+      .then((res) => {
+        if (res && res.ok && res.status === 200) {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(request, copy));
         }
         return res;
-      }).catch(() => cached);
-    })
+      })
+      .catch(() => caches.match(request, { ignoreSearch: true })
+        .then((hit) => hit || (request.mode === 'navigate' ? caches.match('./index.html') : Response.error())))
   );
 });

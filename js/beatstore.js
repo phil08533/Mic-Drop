@@ -3,6 +3,8 @@
 
 import { ROWS, emptyPattern, buildChain, applyMix, playStep, KEY_NAMES, PROGS, KEY_SOUNDS } from './synth.js';
 
+const clone = (o) => JSON.parse(JSON.stringify(o));   // structuredClone is too new for older phones
+
 const KEY = 'micdrop:beats:v1';
 
 export function listBeats() {
@@ -18,7 +20,7 @@ export function saveBeat(pattern) {
   const list = listBeats();
   const id = pattern.id || `b${Date.now().toString(36)}`;
   pattern.id = id;
-  const entry = { id, name: pattern.name.trim() || 'Untitled beat', saved: Date.now(), pattern: structuredClone(pattern) };
+  const entry = { id, name: pattern.name.trim() || 'Untitled beat', saved: Date.now(), pattern: clone(pattern) };
   const i = list.findIndex((b) => b.id === id);
   if (i >= 0) list.splice(i, 1);
   list.unshift(entry);

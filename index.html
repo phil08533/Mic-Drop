@@ -152,13 +152,52 @@
     </section>
   </template>
 
-  <script type="module" src="js/main.js"></script>
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js').catch(() => {});
-      });
-    }
+    // If something breaks, say so on screen (instead of buttons silently doing
+    // nothing), and offer a one-tap repair that clears the offline cache.
+    (function () {
+      function banner(msg) {
+        if (document.getElementById('crash')) return;
+        var d = document.createElement('div');
+        d.id = 'crash';
+        d.className = 'crash';
+        d.innerHTML = '<p><b>Something went wrong.</b> <span></span></p><button class="btn ink" type="button">Repair &amp; reload</button>';
+        d.querySelector('span').textContent = msg || '';
+        d.querySelector('button').onclick = repair;
+        document.body.appendChild(d);
+      }
+      function repair() {
+        var jobs = [];
+        if ('serviceWorker' in navigator) jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); }));
+        if (window.caches) jobs.push(caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }));
+        Promise.all(jobs).catch(function () {}).then(function () { location.reload(); });
+      }
+      window.addEventListener('error', function (e) { if (e.message) banner(e.message); });
+      window.addEventListener('unhandledrejection', function (e) { banner(String(e.reason && e.reason.message || e.reason || '')); });
+      // Opened by double-clicking index.html: browsers block the app's scripts there.
+      if (location.protocol === 'file:') {
+        window.addEventListener('DOMContentLoaded', function () {
+          banner('Mic Drop has to be opened from a web address, not by double-clicking index.html. Run "python3 -m http.server" in the folder and open http://localhost:8000, or use the hosted link.');
+        });
+      }
+      // The app never started (old cached files, unsupported browser...).
+      setTimeout(function () {
+        if (document.getElementById('app').dataset.screen === 'loading') banner('The app didn’t start.');
+      }, 8000);
+
+      if ('serviceWorker' in navigator) {
+        var hadController = !!navigator.serviceWorker.controller, reloaded = false;
+        // A new version took over: reload once so the page runs the new code.
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (hadController && !reloaded) { reloaded = true; location.reload(); }
+        });
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' })
+            .then(function (r) { r.update(); }).catch(function () {});
+        });
+      }
+    })();
   </script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

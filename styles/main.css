@@ -411,6 +411,7 @@ input[type=range]::-moz-range-thumb {
   padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;
 }
 .card-back {
+  background: var(--c);
   background: repeating-linear-gradient(-45deg, var(--c) 0 12px, color-mix(in srgb, var(--c) 80%, #000) 12px 24px);
   color: var(--on-c); align-items: center; justify-content: center; text-align: center;
 }
@@ -730,6 +731,14 @@ body.shake .app { animation: shake .5s linear; }
 .guide-tips h4 { margin: 0 0 4px; font-family: var(--type); font-size: 14px; color: var(--red-ink); }
 .guide-tips ul { margin: 0; padding-left: 18px; }
 .guide-tips li { margin: 4px 0; }
+
+/* crash banner (index.html) */
+.crash {
+  position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 100;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px 14px; background: var(--gold); color: #1d1b18; border: 3px solid #1d1b18; box-shadow: 6px 6px 0 #1d1b18;
+}
+.crash p { margin: 0; flex: 1 1 220px; }
 
 /* ---------- responsive ---------- */
 @media (max-width: 1000px) {
