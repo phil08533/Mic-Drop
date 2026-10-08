@@ -23,6 +23,10 @@ The Beats player is a two-deck mixer with tempo sync, a crossfader and
 auto-mix, and the **visualizer** shows MilkDrop-style visuals (like the old
 media players) for whatever's playing.
 
+New players get a **How to play** button in the top bar: the whole game in four
+steps, plus tips for the screen they're on. It also opens by itself the first
+time someone sets up a game.
+
 Built as a static web app so it can ship to itch.io and be installed from
 Chrome (Add to Home Screen / Install app) for offline play.
 
@@ -85,6 +89,7 @@ js/
   sfx.js                Synthesised sound effects + soundboard
   fire.js, stagefx.js   Background fire
   settings.js           Settings drawer
+  guide.js              How to play guide
 data/                   burns, boasts, rhymes, twists
 music/                  Beats (per-genre folders) + manifest.json
 vendor/butterchurn/     Visualizer library + presets (MIT, loaded on demand)

@@ -711,6 +711,24 @@ body.shake .app { animation: shake .5s linear; }
 .viz-idle { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; font-size: 20px; }
 .viz-idle p { margin: 0; }
 
+/* how to play */
+.poster-help { margin-top: 18px; }
+.guide { width: min(660px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; }
+.guide-title { margin: 0 0 14px; padding-right: 40px; font-family: var(--display); font-weight: 400; font-size: clamp(30px, 5vw, 42px); line-height: 1; text-transform: uppercase; }
+.guide-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; counter-reset: gs; }
+.guide-steps li {
+  counter-increment: gs;
+  display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-content: start;
+  padding: 10px 12px; border: 2px solid var(--rule); background: var(--paper-hi);
+}
+.guide-steps li::before { content: counter(gs); grid-row: span 2; font-family: var(--display); font-size: 52px; line-height: .9; color: var(--red); }
+.guide-steps strong { display: flex; align-items: center; gap: 6px; font-family: var(--display); font-weight: 400; font-size: 23px; line-height: 1.05; text-transform: uppercase; }
+.guide-steps p { margin: 0; color: var(--ink-2); font-size: 15px; }
+.guide-tips { margin-top: 14px; padding: 10px 14px; border: 2px dashed var(--rule); }
+.guide-tips h4 { margin: 0 0 4px; font-family: var(--type); font-size: 14px; color: var(--red-ink); }
+.guide-tips ul { margin: 0; padding-left: 18px; }
+.guide-tips li { margin: 4px 0; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 1000px) {
   .ring { grid-template-columns: 1fr; }
@@ -719,7 +737,8 @@ body.shake .app { animation: shake .5s linear; }
   .team-grid, .team-grid.n2 { grid-template-columns: 1fr; max-width: 560px; }
 }
 @media (max-width: 720px) {
-  .nav-lab span, .np-bpm { display: none; }
+  .nav-lab span, .nav-help span, .np-bpm { display: none; }
+  .guide-steps { grid-template-columns: 1fr; }
   .np { max-width: 140px; }
   .brand { font-size: 24px; }
   .phases li { padding: 6px; }
